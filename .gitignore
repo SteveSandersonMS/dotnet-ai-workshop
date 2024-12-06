@@ -4,3 +4,5 @@ obj/
 *.suo
 node_modules/
 .vs/
+
+*.ncrunchsolution.user
