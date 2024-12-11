@@ -4,3 +4,11 @@ obj/
 *.suo
 node_modules/
 .vs/
+
+*.ncrunchsolution.user
+
+exercises/PlanAndExecute/End/.NCrunch_PlanAndExecute/
+
+*.ncrunchsolution
+
+exercises/PlanAndExecute/End/Planner/nCrunchTemp_*.csproj

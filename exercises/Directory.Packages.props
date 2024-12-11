@@ -9,15 +9,22 @@
     <PackageVersion Include="Azure.AI.OpenAI" Version="2.1.0-beta.2" />
     <PackageVersion Include="FaissMask" Version="0.3.2-beta02" />
     <PackageVersion Include="FaissNet" Version="1.1.0" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MicrosoftExtensionsAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="$(MicrosoftExtensionsAIVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.AI.AzureAIInference" Version="9.0.1-preview.1.24570.5" />
     <PackageVersion Include="Microsoft.Extensions.AI.Ollama" Version="$(MicrosoftExtensionsAIVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MicrosoftExtensionsAIVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="9.0.1-preview.1.24570.5" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.24.1" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="PdfPig" Version="0.1.10-alpha-20241019-e1060" />
     <PackageVersion Include="Qdrant.Client" Version="1.12.0" />
     <PackageVersion Include="SmartComponents.LocalEmbeddings" Version="0.1.0-preview10148" />
     <PackageVersion Include="System.Numerics.Tensors" Version="9.0.0-rc.2.24473.5" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
   </ItemGroup>
 </Project>
