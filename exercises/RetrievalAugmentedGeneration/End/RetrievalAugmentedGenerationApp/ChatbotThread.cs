@@ -35,12 +35,12 @@ public class ChatbotThread(
     {
         // For a simple version of RAG, we'll embed the user's message directly and
         // add the closest few manual chunks to context.
-        var userMessageEmbedding = await embeddingGenerator.GenerateEmbeddingVectorAsync(userMessage);
+        var userMessageEmbedding = await embeddingGenerator.GenerateEmbeddingVectorAsync(userMessage, cancellationToken: cancellationToken);
         var closestChunks = await qdrantClient.SearchAsync(
             collectionName: "manuals",
             vector: userMessageEmbedding.ToArray(),
             filter: Qdrant.Client.Grpc.Conditions.Match("productId", currentProduct.ProductId),
-            limit: 3); // TODO: Evaluate with more or less
+            limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
         var allContext = closestChunks.Select(c => c.Payload["text"].StringValue).ToArray();
 
         /*
