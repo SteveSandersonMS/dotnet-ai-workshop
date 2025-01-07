@@ -9,8 +9,10 @@
     <PackageVersion Include="Azure.AI.OpenAI" Version="2.1.0" />
     <PackageVersion Include="FaissMask" Version="0.3.2-beta02" />
     <PackageVersion Include="FaissNet" Version="1.1.0" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MicrosoftExtensionsAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="$(MicrosoftExtensionsAIVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.AI.AzureAIInference" Version="9.0.1-preview.1.24570.5" />
     <PackageVersion Include="Microsoft.Extensions.AI.Ollama" Version="$(MicrosoftExtensionsAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MicrosoftExtensionsAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />

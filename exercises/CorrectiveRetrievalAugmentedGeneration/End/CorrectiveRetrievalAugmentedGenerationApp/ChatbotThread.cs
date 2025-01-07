@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
-namespace RetrievalAugmentedGenerationApp;
+namespace CorrectiveRetrievalAugmentedGenerationApp;
 
 public class ChatbotThread(
     IChatClient chatClient,
@@ -35,13 +35,13 @@ public class ChatbotThread(
     {
         // For a simple version of RAG, we'll embed the user's message directly and
         // add the closest few manual chunks to context.
-        var userMessageEmbedding = await embeddingGenerator.GenerateEmbeddingVectorAsync(userMessage, cancellationToken: cancellationToken);
-        var closestChunks = await qdrantClient.SearchAsync(
+        ReadOnlyMemory<float> userMessageEmbedding = await embeddingGenerator.GenerateEmbeddingVectorAsync(userMessage, cancellationToken: cancellationToken);
+        IReadOnlyList<ScoredPoint> closestChunks = await qdrantClient.SearchAsync(
             collectionName: "manuals",
             vector: userMessageEmbedding.ToArray(),
             filter: Qdrant.Client.Grpc.Conditions.Match("productId", currentProduct.ProductId),
             limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
-        var allContext = closestChunks.Select(c => c.Payload["text"].StringValue).ToArray();
+        string[] allContext = closestChunks.Select(c => c.Payload["text"].StringValue).ToArray();
 
         /*
         // Log the closest manual chunks for debugging (not using ILogger because we want color)
@@ -70,14 +70,14 @@ public class ChatbotThread(
             }
             """));
 
-        var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-        var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
+        bool isOllama = chatClient.GetService<OllamaChatClient>() is not null;
+        ChatCompletion<ChatBotAnswer> response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
         _messages.Add(response.Message);
 
-        if (response.TryGetResult(out var answer))
+        if (response.TryGetResult(out ChatBotAnswer? answer))
         {
             // If the chatbot gave a citation, convert it to info to show in the UI
-            var citation = answer.ManualExtractId.HasValue && closestChunks.FirstOrDefault(c => c.Id.Num == (ulong)answer.ManualExtractId) is { } chunk
+            Citation? citation = answer.ManualExtractId.HasValue && closestChunks.FirstOrDefault(c => c.Id.Num == (ulong)answer.ManualExtractId) is { } chunk
                 ? new Citation((int)chunk.Payload["productId"].IntegerValue, (int)chunk.Payload["pageNumber"].IntegerValue, answer.ManualQuote ?? "")
                 : default;
 
@@ -119,8 +119,8 @@ public class ChatbotThread(
         [Description("The product ID, or null to search across all products")] int? productIdOrNull,
         [Description("The search phrase or keywords")] string searchPhrase)
     {
-        var searchPhraseEmbedding = (await embeddingGenerator.GenerateAsync([searchPhrase]))[0];
-        var closestChunks = await qdrantClient.SearchAsync(
+        Embedding<float> searchPhraseEmbedding = (await embeddingGenerator.GenerateAsync([searchPhrase]))[0];
+        IReadOnlyList<ScoredPoint> closestChunks = await qdrantClient.SearchAsync(
             collectionName: "manuals",
             vector: searchPhraseEmbedding.Vector.ToArray(),
             filter: productIdOrNull is { } productId ? Qdrant.Client.Grpc.Conditions.Match("productId", productId) : (Filter?)default,
@@ -134,9 +134,9 @@ public class ChatbotThread(
 
     private static ChatBotAnswer ParseResponse(string text)
     {
-        var citationRegex = new Regex(@"<cite extractId='(\d+)' productId='\d*'>(.+?)</cite>");
+        Regex citationRegex = new Regex(@"<cite extractId='(\d+)' productId='\d*'>(.+?)</cite>");
         if (citationRegex.Match(text) is { Success: true, Groups: var groups } match
-            && int.TryParse(groups[1].ValueSpan, out var extractId))
+            && int.TryParse(groups[1].ValueSpan, out int extractId))
         {
             return new(extractId, groups[2].Value, citationRegex.Replace(text, string.Empty));
         }

@@ -4,3 +4,13 @@ obj/
 *.suo
 node_modules/
 .vs/
+
+*.ncrunchsolution.user
+
+exercises/**/.NCrunch_PlanAndExecute/
+
+*.ncrunchsolution
+
+exercises/**/nCrunchTemp_*.csproj
+
+exercises/**/.NCrunch_CorrectiveRetrievalAugmentedGeneration/
