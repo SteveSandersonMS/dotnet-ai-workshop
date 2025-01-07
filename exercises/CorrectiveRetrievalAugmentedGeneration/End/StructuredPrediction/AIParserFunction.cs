@@ -27,10 +27,10 @@ public class AIParserFunction : AIFunction
             inferenceOptions: _inferenceOptions);
 
         JsonElement propertiesElement = schemaElement.GetProperty("properties");
-        List<AIFunctionParameterMetadata> parameters = new List<AIFunctionParameterMetadata>();
+        List<AIFunctionParameterMetadata> parameters = new();
         foreach (JsonProperty p in propertiesElement.EnumerateObject())
         {
-            AIFunctionParameterMetadata parameterSchema = new AIFunctionParameterMetadata(p.Name) { Schema = p.Value, };
+            AIFunctionParameterMetadata parameterSchema = new(p.Name) { Schema = p.Value, };
             parameters.Add(parameterSchema);
         }
 
@@ -50,7 +50,7 @@ public class AIParserFunction : AIFunction
     protected override Task<object?> InvokeCoreAsync(IEnumerable<KeyValuePair<string, object?>> arguments, CancellationToken cancellationToken)
     {
 
-        Dictionary<string, object> argumentDictionary = new Dictionary<string, object?>(arguments);
+        Dictionary<string, object> argumentDictionary = new(arguments);
         object? result = JsonSerializer.Deserialize(JsonSerializer.Serialize(argumentDictionary), _type, _serializerOptions);
         return Task.FromResult(result);
     }

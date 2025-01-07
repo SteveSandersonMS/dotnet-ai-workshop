@@ -14,13 +14,13 @@ public class ChatbotThread(
 {
     private List<ChatMessage> _messages =
     [
-        new ChatMessage(ChatRole.System, $"""
-            You are a helpful assistant, here to help customer service staff answer questions they have received from customers.
-            The support staff member is currently answering a question about this product:
-            ProductId: ${currentProduct.ProductId}
-            Brand: ${currentProduct.Brand}
-            Model: ${currentProduct.Model}
-            """),
+        new(ChatRole.System, $"""
+                              You are a helpful assistant, here to help customer service staff answer questions they have received from customers.
+                              The support staff member is currently answering a question about this product:
+                              ProductId: ${currentProduct.ProductId}
+                              Brand: ${currentProduct.Brand}
+                              Model: ${currentProduct.Model}
+                              """),
         /*
         Answer the user question using ONLY information found by searching product manuals.
             If the product manual doesn't contain the information, you should say so. Do not make up information beyond what is
@@ -134,7 +134,7 @@ public class ChatbotThread(
 
     private static ChatBotAnswer ParseResponse(string text)
     {
-        Regex citationRegex = new Regex(@"<cite extractId='(\d+)' productId='\d*'>(.+?)</cite>");
+        Regex citationRegex = new(@"<cite extractId='(\d+)' productId='\d*'>(.+?)</cite>");
         if (citationRegex.Match(text) is { Success: true, Groups: var groups } match
             && int.TryParse(groups[1].ValueSpan, out int extractId))
         {

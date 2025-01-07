@@ -31,9 +31,9 @@ public class StructuredChatClientTests
     [Fact]
     public void StructuredChatClient_throws_when_FunctionInvocation_client_is_used()
     {
-        Mock<IChatClient> clientMock = new Mock<IChatClient>();
+        Mock<IChatClient> clientMock = new();
 
-        IChatClient chatClient = clientMock.Object.AsBuilder().UseFunctionInvocation().Build();
+        IChatClient chatClient = (new ChatClientBuilder()).UseFunctionInvocation().Use(clientMock.Object);
         Func<StructuredChatClient> clientBuild = () => new StructuredChatClient(chatClient, [typeof(Plan)]);
         clientBuild.Should().ThrowExactly<ArgumentException>();
     }
@@ -41,8 +41,8 @@ public class StructuredChatClientTests
     [Fact]
     public void StructuredChatClient_generates_tools_for_each_type()
     {
-        Mock<IChatClient> clientMock = new Mock<IChatClient>();
-        StructuredChatClient client = new StructuredChatClient(clientMock.Object, [typeof(Plan)]);
+        Mock<IChatClient> clientMock = new();
+        StructuredChatClient client = new(clientMock.Object, [typeof(Plan)]);
 
         client.GetSupportedTypes().Should().BeEquivalentTo([typeof(Plan)]);
     }
@@ -50,7 +50,7 @@ public class StructuredChatClientTests
     [Fact]
     public void AIParserTool_generates_a_function_metadata()
     {
-        AIParserFunction tool = new AIParserFunction(typeof(Plan));
+        AIParserFunction tool = new(typeof(Plan));
         tool.Metadata.Parameters.Should().HaveCount(1);
         tool.Metadata.ReturnParameter.Should().NotBeNull();
     }
@@ -66,11 +66,11 @@ public class StructuredChatClientTests
                 new ApiKeyCredential(key!))
 
             .AsChatClient("gpt-4o-mini");
-        StructuredChatClient client = new StructuredChatClient(chatClient, [typeof(Plan)]);
+        StructuredChatClient client = new(chatClient, [typeof(Plan)]);
 
         StructuredPredictionResult result = await client.PredictAsync([new ChatMessage(ChatRole.User, "create a plan to go to the moon")]);
 
-        using AssertionScope _ = new AssertionScope();
+        using AssertionScope _ = new();
 
         result.PredictionType.Should().Be(typeof(Plan));
 
@@ -84,20 +84,20 @@ public class StructuredChatClientTests
     [Fact]
     public async Task AIParserTool_chooses_one_type_to_parse_a_conversation()
     {
-        string endpoint = _configuration["AzureOpenAI:endpoint"] ?? string.Empty;
-        string key = _configuration["AzureOpenAI:apikey"] ?? string.Empty;
+        string endpoint = _configuration["AzureOpenAI:Endpoint"] ?? string.Empty;
+        string key = _configuration["AzureOpenAI:Key"] ?? string.Empty;
         IChatClient chatClient = new AzureOpenAIClient(
             new Uri(endpoint),
             new ApiKeyCredential(key))
 
             .AsChatClient("gpt-4o-mini");
-        StructuredChatClient client = new StructuredChatClient(chatClient, [typeof(Plan), typeof(PlanResult)]);
+        StructuredChatClient client = new(chatClient, [typeof(Plan), typeof(PlanResult)]);
 
         StructuredPredictionResult result = await client.PredictAsync([
             new ChatMessage(ChatRole.System, "Create a plan if the user asks for help on how to achieve a goal, if is clear what to do then just present a result"),
             new ChatMessage(ChatRole.User, "We got on the moon.")]);
 
-        using AssertionScope _ = new AssertionScope();
+        using AssertionScope _ = new();
 
         result.PredictionType.Should().Be(typeof(PlanResult));
 

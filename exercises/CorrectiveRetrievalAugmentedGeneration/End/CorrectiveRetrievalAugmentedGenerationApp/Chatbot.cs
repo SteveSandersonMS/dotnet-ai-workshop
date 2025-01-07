@@ -13,7 +13,7 @@ public class Chatbot(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         Product currentProduct = Helpers.GetCurrentProduct();
-        ChatbotThread thread = new ChatbotThread(chatClient, embeddingGenerator, qdrantClient, currentProduct);
+        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct);
 
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Assistant: Hi! You're looking at the {currentProduct.Model}. What do you want to know about it?");

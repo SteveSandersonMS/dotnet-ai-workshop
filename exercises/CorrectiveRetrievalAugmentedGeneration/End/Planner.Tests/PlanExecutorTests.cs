@@ -31,14 +31,14 @@ public class PlanExecutorTests
             .AsChatClient("gpt-4o-mini");
         
 
-        PlanExecutor executor = new PlanExecutor(chatClient);
-        Plan plan = new Plan([
+        PlanExecutor executor = new(chatClient);
+        Plan plan = new([
             new PlanStep("find distance from earth to the moon"),
             new PlanStep("calculate necessary fuel for spaceship")
         ]);
 
         PanStepExecutionResult result = await executor.ExecutePlanStep(plan);
-        using AssertionScope scope = new AssertionScope();
+        using AssertionScope scope = new();
 
         result.Should().NotBeNull();
         result.StepAction.Should().Be("find distance from earth to the moon");

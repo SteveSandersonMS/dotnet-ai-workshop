@@ -45,7 +45,7 @@ public class PlanEvaluatorTests
 
         PlanOrResult planOrResult = await planEvaluator.EvaluatePlanAsync(task, plan, previousSteps);
 
-        using AssertionScope scope = new AssertionScope();
+        using AssertionScope scope = new();
         planOrResult.Result.Should().NotBeNull();
         planOrResult.Result!.Outcome.Should().NotBeNullOrWhiteSpace();
         planOrResult.Result.Outcome.Should().Contain("384.4");
@@ -61,7 +61,7 @@ public class PlanEvaluatorTests
                 new ApiKeyCredential(key))
 
             .AsChatClient("gpt-4o-mini");
-        PlanEvaluator planEvaluator = new PlanEvaluator(chatClient);
+        PlanEvaluator planEvaluator = new(chatClient);
 
         Plan plan = new ([
             new PlanStep("find distance from earth to the moon"),
@@ -77,7 +77,7 @@ public class PlanEvaluatorTests
 
         PlanOrResult planOrResult = await planEvaluator.EvaluatePlanAsync(task, plan, previousSteps);
 
-        using AssertionScope scope = new AssertionScope();
+        using AssertionScope scope = new();
 
         planOrResult.Plan.Should().NotBeNull();
         planOrResult.Plan!.Steps.Should().HaveCountGreaterThan(1);
