@@ -14,7 +14,7 @@ using Qdrant.Client;
 // Set up app host
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
-builder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
+builder.Services.AddLogging(logBuilder => logBuilder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 
 IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!), new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!))
     .AsChatClient("gpt-4o-mini");
@@ -27,7 +27,6 @@ builder.Services.AddEmbeddingGenerator<string, Embedding<float>>(pipeline => pip
     .Use(new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm")));
 builder.Services.AddSingleton(new QdrantClient("127.0.0.1"));
 builder.Services.AddChatClient(pipeline => pipeline
-    .UseFunctionInvocation()
     .Use(innerChatClient));
 
 // Go

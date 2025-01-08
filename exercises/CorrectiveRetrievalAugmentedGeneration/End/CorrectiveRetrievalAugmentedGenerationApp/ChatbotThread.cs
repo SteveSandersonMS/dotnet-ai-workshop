@@ -12,7 +12,7 @@ public class ChatbotThread(
     QdrantClient qdrantClient,
     Product currentProduct)
 {
-    private List<ChatMessage> _messages =
+    private readonly List<ChatMessage> _messages =
     [
         new(ChatRole.System, $"""
                               You are a helpful assistant, here to help customer service staff answer questions they have received from customers.
@@ -39,9 +39,13 @@ public class ChatbotThread(
         IReadOnlyList<ScoredPoint> closestChunks = await qdrantClient.SearchAsync(
             collectionName: "manuals",
             vector: userMessageEmbedding.ToArray(),
-            filter: Qdrant.Client.Grpc.Conditions.Match("productId", currentProduct.ProductId),
+            filter: Conditions.Match("productId", currentProduct.ProductId),
             limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
         string[] allContext = closestChunks.Select(c => c.Payload["text"].StringValue).ToArray();
+
+        // calculate relevancy
+
+        // perform corrective retrieval if needed
 
         /*
         // Log the closest manual chunks for debugging (not using ILogger because we want color)
@@ -79,13 +83,13 @@ public class ChatbotThread(
             // If the chatbot gave a citation, convert it to info to show in the UI
             Citation? citation = answer.ManualExtractId.HasValue && closestChunks.FirstOrDefault(c => c.Id.Num == (ulong)answer.ManualExtractId) is { } chunk
                 ? new Citation((int)chunk.Payload["productId"].IntegerValue, (int)chunk.Payload["pageNumber"].IntegerValue, answer.ManualQuote ?? "")
-                : default;
+                : null;
 
             return (answer.AnswerText, citation, allContext);
         }
         else
         {
-            return ("Sorry, there was a problem.", default, allContext);
+            return ("Sorry, there was a problem.", null, allContext);
         }
 
         /*
@@ -141,6 +145,6 @@ public class ChatbotThread(
             return new(extractId, groups[2].Value, citationRegex.Replace(text, string.Empty));
         }
 
-        return new(default, default, text);
+        return new(null, null, text);
     }
 }

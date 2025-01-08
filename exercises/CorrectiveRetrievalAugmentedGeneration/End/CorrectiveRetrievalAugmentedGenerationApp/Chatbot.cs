@@ -18,7 +18,7 @@ public class Chatbot(
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Assistant: Hi! You're looking at the {currentProduct.Model}. What do you want to know about it?");
 
-        while (true)
+        while (!cancellationToken.IsCancellationRequested)
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("\nYou: ");
@@ -28,7 +28,7 @@ public class Chatbot(
                 continue;
             }
 
-            (string Text, ChatbotThread.Citation Citation, string[] AllContext) answer = await thread.AnswerAsync(userMessage, cancellationToken);
+            (string Text, ChatbotThread.Citation Citation, string[] AllContext) answer = (await thread.AnswerAsync(userMessage, cancellationToken))!;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Assistant: {answer.Text}\n");
