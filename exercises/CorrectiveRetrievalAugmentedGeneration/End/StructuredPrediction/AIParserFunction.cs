@@ -7,13 +7,13 @@ public class AIParserFunction : AIFunction
 {
     private readonly Type _type;
 
-    private static readonly AIJsonSchemaCreateOptions _inferenceOptions = new()
+    private static readonly AIJsonSchemaCreateOptions s_inferenceOptions = new()
     {
         IncludeSchemaKeyword = true,
         DisallowAdditionalProperties = true,
         IncludeTypeInEnumSchemas = true
     };
-    private static readonly JsonSerializerOptions _serializerOptions = new()
+    private static readonly JsonSerializerOptions s_serializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
     };
@@ -24,10 +24,10 @@ public class AIParserFunction : AIFunction
         JsonElement schemaElement = AIJsonUtilities.CreateJsonSchema(
             type: type,
             serializerOptions: AIJsonUtilities.DefaultOptions,
-            inferenceOptions: _inferenceOptions);
+            inferenceOptions: s_inferenceOptions);
 
         JsonElement propertiesElement = schemaElement.GetProperty("properties");
-        List<AIFunctionParameterMetadata> parameters = new();
+        List<AIFunctionParameterMetadata> parameters = [];
         foreach (JsonProperty p in propertiesElement.EnumerateObject())
         {
             AIFunctionParameterMetadata parameterSchema = new(p.Name) { Schema = p.Value, };
@@ -51,7 +51,7 @@ public class AIParserFunction : AIFunction
     {
 
         Dictionary<string, object> argumentDictionary = new(arguments);
-        object? result = JsonSerializer.Deserialize(JsonSerializer.Serialize(argumentDictionary), _type, _serializerOptions);
+        object? result = JsonSerializer.Deserialize(JsonSerializer.Serialize(argumentDictionary), _type, s_serializerOptions);
         return Task.FromResult(result);
     }
 }

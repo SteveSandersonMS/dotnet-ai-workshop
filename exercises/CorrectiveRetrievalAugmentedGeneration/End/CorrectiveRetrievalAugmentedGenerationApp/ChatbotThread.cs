@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
+using Planner;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
@@ -41,12 +42,79 @@ public class ChatbotThread(
             vector: userMessageEmbedding.ToArray(),
             filter: Conditions.Match("productId", currentProduct.ProductId),
             limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
-        string[] allContext = closestChunks.Select(c => c.Payload["text"].StringValue).ToArray();
+        
+        var chunksById = closestChunks.ToDictionary(c => c.Id.Num, c => new
+        {
+            Id = c.Id.Num,
+            Text = c.Payload["text"].StringValue,
+            ProductId = (int)c.Payload["productId"].IntegerValue,
+            PageNumber = (int)c.Payload["pageNumber"].IntegerValue
+        });
 
         // calculate relevancy
 
+        ContextRelevancyEvaluator contextRelevancyEvaluator = new(chatClient);
+
+        List<string> allContext = [];
+
+        foreach (var retrievedContext in chunksById.Values)
+        {
+            var score = await contextRelevancyEvaluator.EvaluateAsync(userMessage, retrievedContext.Text, cancellationToken);
+            if (score.ContextRelevance!.ScoreNumber > 0.7)
+            {
+                allContext.Add(retrievedContext.Text);
+            }
+        }
+
         // perform corrective retrieval if needed
 
+        if (allContext.Count == 0)
+        {
+            var planGenerator = new PlanGenerator(chatClient);
+
+            var toolCallingClient = new FunctionInvokingChatClient(chatClient);
+            var stepExecutor = new PlanExecutor(toolCallingClient);
+
+            var evaluator = new PlanEvaluator(chatClient);
+
+            string task = $"""
+                           Given the <user_question>, search the product manuals for relevant information.
+                           Look for information that may answer the question, and provide a response based on that information.
+                           The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
+
+                           <user_question>
+                           {userMessage}
+                           </user_question>
+
+                           <context>
+                           {string.Join("\n", chunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
+                           </context>
+                           """;
+            var plan = await planGenerator.GeneratePlanSync(
+                task
+                , cancellationToken);
+
+            List<PanStepExecutionResult> pastSteps = [];
+
+            var res = await  stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
+            pastSteps.Add(res);
+
+            var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+
+            while (planOrResult.Plan is not null)
+            {
+                res = await stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
+                pastSteps.Add(res);
+
+                planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+            }
+
+            if (planOrResult.Result is not null)
+            {
+                allContext.Add(planOrResult.Result.Outcome);
+            }
+
+        }
         /*
         // Log the closest manual chunks for debugging (not using ILogger because we want color)
         foreach (var chunk in closestChunks)
@@ -81,15 +149,15 @@ public class ChatbotThread(
         if (response.TryGetResult(out ChatBotAnswer? answer))
         {
             // If the chatbot gave a citation, convert it to info to show in the UI
-            Citation? citation = answer.ManualExtractId.HasValue && closestChunks.FirstOrDefault(c => c.Id.Num == (ulong)answer.ManualExtractId) is { } chunk
-                ? new Citation((int)chunk.Payload["productId"].IntegerValue, (int)chunk.Payload["pageNumber"].IntegerValue, answer.ManualQuote ?? "")
+            Citation? citation = answer.ManualExtractId.HasValue && chunksById.TryGetValue((ulong)answer.ManualExtractId, out var chunk) 
+                ? new Citation(chunk.ProductId,chunk.PageNumber, answer.ManualQuote ?? "")
                 : null;
 
-            return (answer.AnswerText, citation, allContext);
+            return (answer.AnswerText, citation, allContext.ToArray());
         }
         else
         {
-            return ("Sorry, there was a problem.", null, allContext);
+            return ("Sorry, there was a problem.", null, allContext.ToArray());
         }
 
         /*

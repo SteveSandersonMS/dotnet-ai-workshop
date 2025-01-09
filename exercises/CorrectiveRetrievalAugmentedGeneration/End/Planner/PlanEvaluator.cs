@@ -8,7 +8,7 @@ public class PlanEvaluator(IChatClient chatClient)
 {
     private readonly IStructuredPredictor _structuredPredictor = chatClient.ToStructuredPredictor(typeof(Plan), typeof(PlanResult));
 
-    public async Task<PlanOrResult> EvaluatePlanAsync(string task, Plan currentPlan, PanStepExecutionResult[] previousStepExecutionResults,
+    public async Task<PlanOrResult> EvaluatePlanAsync(string task, Plan currentPlan, List<PanStepExecutionResult> previousStepExecutionResults,
         CancellationToken cancellationToken = default)
     {
         string plan = string.Join("\n", currentPlan.Steps.Select((step, i) => $"{i + 1}. {step.Action}"));
