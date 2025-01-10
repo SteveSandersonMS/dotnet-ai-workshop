@@ -1,12 +1,12 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <MicrosoftExtensionsAIVersion>9.0.0-preview.9.24525.1</MicrosoftExtensionsAIVersion>
+    <MicrosoftExtensionsAIVersion>9.0.1-preview.1.24570.5</MicrosoftExtensionsAIVersion>
     <!-- By having a common user secrets ID, it's possible to set your LLM service endpoint/key just once and use them for the whole workshop -->
     <WorkshopUserSecretsId>09d8a94b-1370-4bc7-a9b8-9326a60ed927</WorkshopUserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Azure.AI.OpenAI" Version="2.1.0-beta.2" />
+    <PackageVersion Include="Azure.AI.OpenAI" Version="2.1.0" />
     <PackageVersion Include="FaissMask" Version="0.3.2-beta02" />
     <PackageVersion Include="FaissNet" Version="1.1.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MicrosoftExtensionsAIVersion)" />
@@ -14,10 +14,10 @@
     <PackageVersion Include="Microsoft.Extensions.AI.Ollama" Version="$(MicrosoftExtensionsAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MicrosoftExtensionsAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.24.1" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.33.0" />
     <PackageVersion Include="PdfPig" Version="0.1.10-alpha-20241019-e1060" />
     <PackageVersion Include="Qdrant.Client" Version="1.12.0" />
     <PackageVersion Include="SmartComponents.LocalEmbeddings" Version="0.1.0-preview10148" />
-    <PackageVersion Include="System.Numerics.Tensors" Version="9.0.0-rc.2.24473.5" />
+    <PackageVersion Include="System.Numerics.Tensors" Version="9.0.0" />
   </ItemGroup>
 </Project>
