@@ -130,7 +130,7 @@ class PropertyDetails
     public ListingType ListingType { get; set; }
     public required string Neighbourhood { get; set; }
     public int NumBedrooms { get; set; }
-    public decimal Price { get; set; }
+    public int Price { get; set; }
     public required string[] Amenities { get; set; }
     public required string TenWordSummary { get; set; }
 }
