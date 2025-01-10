@@ -255,3 +255,99 @@ Most business-process automation will use structured output. Examples:
 ### Structured output
 
 Go back to your `QuizApp` from [session 1](./1_BuildAQuizApp.md) and change the logic in `SubmitAnswerAsync` so that it uses structured output.
+
+### Classification
+
+Business applications often need to classify unstructured inputs, for example to automate workflows, triggering different behaviors depending on what some text or image seems to contain or be about. In fact you just did this above: the "property details" example classified inputs as "Sale" or "Rental".
+
+To practice this further, can you write a bit of code that classifies today's news stories into groups of your choosing? To get started, this C# code will give you today's top Hacker News stories:
+
+```cs
+static async Task<HNStory[]> GetTopStories(int count)
+{
+    const string baseUrl = "https://hacker-news.firebaseio.com/v0";
+    using var client = new HttpClient();
+    var storyIds = await client.GetFromJsonAsync<int[]>($"{baseUrl}/topstories.json");
+    var resultTasks = storyIds!.Take(count).Select(id => client.GetFromJsonAsync<HNStory>($"{baseUrl}/item/{id}.json")).ToArray();
+    return (await Task.WhenAll(resultTasks))!;
+}
+
+record HNStory(int Id, string Title);
+```
+
+Let's say you want to group today's stories into these categories:
+
+```cs
+enum Category { AI, ProgrammingLanguages, Startups, History, Business, Society }
+```
+
+Can you use structured output to write out a list of stories grouped by category?
+
+> [!TIP]
+> There are two main ways you can go. You could make a separate `CompleteAsync<T>` call for each story, or you could make a single call asking the LLM to classify all the stories at once. Which option do you prefer?
+
+Expand the section below for a possible solution.
+
+<details>
+<summary>SOLUTION</summary>
+
+First put this at the end of your file:
+
+```cs
+record CategorizedHNStory(int Id, string Title, Category Category);
+```
+
+... and then here's the code:
+
+```cs
+var stories = await GetTopStories(20);
+
+// Categorize them all at once
+var response = await chatClient.CompleteAsync<CategorizedHNStory[]>(
+    $"For each of the following news stories, decide on a suitable category: {JsonSerializer.Serialize(stories)}");
+
+// Display results
+if (response.TryGetResult(out var categorized))
+{
+    foreach (var group in categorized.GroupBy(s => s.Category))
+    {
+        Console.WriteLine(group.Key);
+        foreach (var story in group)
+        {
+            Console.WriteLine($" * [{story.Id}] {story.Title}");
+        }
+        Console.WriteLine();
+    }
+}
+```
+
+As you can see, this solution asks the LLM to classify all the stories at once. This will generally be faster overall, but does run into the limitation that if you needed to classify hundreds of stories, it would be too big of a prompt to do them all at once and so you'd still need to split them up at some point.
+
+If you're trying to use a small model on Ollama, you may find the above code produces no output because it won't follow the JSON schema. It will be much more reliable on Ollama, albeit slower, if you ask it separately about each new story instead of classifying them all at once:
+
+```cs
+// Categorize each of them individually, but in parallel
+var categorized = await Task.WhenAll(stories.Select(async story =>
+{
+    var response = await chatClient.CompleteAsync<Category>(
+        $$"""
+        For the following news story, decide on a suitable category: {{story.Title}}
+        Respond with one of the following enum values, and no other output: {{string.Join(", ", Enum.GetValues<Category>())}}
+        """);
+    return new CategorizedHNStory(story.Id, story.Title, response.TryGetResult(out var category) ? category : null);
+}));
+
+// Display results
+foreach (var group in categorized.GroupBy(s => s.Category))
+{
+    Console.WriteLine(group.Key);
+    foreach (var story in group)
+    {
+        Console.WriteLine($" * [{story.Id}] {story.Title}");
+    }
+    Console.WriteLine();
+}
+
+record CategorizedHNStory(int Id, string Title, Category? Category);
+```
+</details>
