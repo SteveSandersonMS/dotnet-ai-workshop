@@ -9,9 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Microsoft.Extensions.AI.AzureAIInference" />
     <PackageReference Include="Azure.AI.OpenAI" />
+    <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />

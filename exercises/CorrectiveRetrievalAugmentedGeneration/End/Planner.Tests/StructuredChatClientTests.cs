@@ -33,7 +33,7 @@ public class StructuredChatClientTests
     {
         Mock<IChatClient> clientMock = new();
 
-        IChatClient chatClient = (new ChatClientBuilder()).UseFunctionInvocation().Use(clientMock.Object);
+        IChatClient chatClient = new FunctionInvokingChatClient(clientMock.Object);
         Func<StructuredChatClient> clientBuild = () => new StructuredChatClient(chatClient, [typeof(Plan)]);
         clientBuild.Should().ThrowExactly<ArgumentException>();
     }
