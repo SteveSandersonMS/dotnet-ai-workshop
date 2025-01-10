@@ -207,7 +207,9 @@ Even if you weren't using Ollama before, try to do so now. This means changing y
 IChatClient innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1")
 ```
 
-On `llama3.1`, it will produce good `PropertyDetails` data about 50% of the time. The problem is that smaller models aren't very good at understanding JSON schema - the concept is too formal and abstract. They are much better at understanding an *example* of the JSON you want them to return.
+On `llama3.1`, it will produce good `PropertyDetails` JSON data about 90% of the time, which is good but maybe not good enough for real use. And if you try out a much smaller model, by swapping `"llama3.1"` for `"phi3:mini"`, it will fail to produce compliant JSON most of the time, so you'll usually get no output.
+
+The problem is that smaller models aren't very good at understanding JSON schema - the concept is too formal and abstract. They are much better at understanding an *example* of the JSON you want them to return.
 
 So, replace this code:
 
@@ -235,12 +237,10 @@ var messages = new List<ChatMessage>
         """),
     new(ChatRole.User, listingText),
 };
-var response = await chatClient.CompleteAsync<PropertyDetails>(messages, useNativeJsonSchema: true);
+var response = await chatClient.CompleteAsync<PropertyDetails>(messages);
 ```
 
-Any better? It will probably work perfectly on `llama3.1` every time now. You can even use a very small model like `phi3:mini` and get great results.
-
-**Warning:** If you're using OpenAI, you can only set `useNativeJsonSchema: true` for models that support [native structured output](https://platform.openai.com/docs/guides/structured-outputs). On Ollama it's just ignored (except that it also causes `CompleteAsync<T>` *not* to attach the JSON schema to the prompt, reducing confusion). This is a temporary inconvenience - we expect a later version of Microsoft.Extensions.AI to toggle `useNativeJsonSchema` automatically based on the model's capabilities.
+Any better? It will probably work perfectly on `llama3.1` every time now, and even `phi3:mini` will give great results.
 
 ### Use cases for structured output
 
