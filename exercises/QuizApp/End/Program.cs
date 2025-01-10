@@ -14,8 +14,7 @@ var innerChatClient = new AzureOpenAIClient(
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-builder.Services.AddChatClient(pipeline => pipeline
-    .Use(innerChatClient));
+builder.Services.AddChatClient(innerChatClient);
 
 var app = builder.Build();
 

@@ -175,9 +175,8 @@ var response = await chatClient.CompleteAsync<TrafficCamResult>([message], chatO
 And don't forget to actually enable function invocation in your pipeline! Add `UseFunctionInvocation` to your `hostBuilder.Services.AddChatClient` call as follows:
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
-    .UseFunctionInvocation()
-    .Use(innerChatClient));
+hostBuilder.Services.AddChatClient(innerChatClient)
+    .UseFunctionInvocation();
 ```
 
 If you run now, you may find it either never raises alerts, or does so even for situations that don't warrant one (e.g., traffic congestion). It's up to you to specify in your prompt what conditions should lead to an alert. For example:

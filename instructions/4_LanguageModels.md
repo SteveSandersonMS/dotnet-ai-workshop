@@ -169,9 +169,8 @@ Regardless of whether this works for you, let's understand what's happening behi
 To see this for yourself, find the call to `AddChatClient` near the top of `Program.cs`, and insert `UseLogging` as follows:
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
-    .UseLogging()
-    .Use(innerChatClient));
+hostBuilder.Services.AddChatClient(innerChatClient)
+    .UseLogging();
 ```
 
 Next time you run, it will produce a detailed log of the calls to the underlying LLM provider. It will be very hard to read, but if you look closely, you may notice that your prompt has been augmented with an instruction like the following:
@@ -347,9 +346,8 @@ With `Microsoft.Extensions.AI`, the business of invoking functions is handled th
 To enable automatic function invocation, go back to your `hostBuilder.Services.AddChatClient` call and insert the `UseFunctionInvocation` middleware:
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
-    .UseFunctionInvocation()
-    .Use(innerChatClient));
+hostBuilder.Services.AddChatClient(innerChatClient)
+    .UseFunctionInvocation();
 ```
 
 Now if you ask again:
@@ -458,10 +456,9 @@ An interesting way you can try to mitigate this is with more prompt engineering.
 To explore this - and only if you're using Ollama - go back to your `IChatClient` middleware and add `UsePromptBasedFunctionCalling` right after `UseFunctionInvocation`:
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
+hostBuilder.Services.AddChatClient(innerChatClient)
     .UseFunctionInvocation()
-    .UsePromptBasedFunctionCalling()
-    .Use(innerChatClient));
+    .UsePromptBasedFunctionCalling();
 ```
 
 `UsePromptBasedFunctionCalling` will automatically augment your prompt with a description of the available tools, and converts responses that look like tool call instructions into real `FunctionCallContent` instances that work with `UseFunctionInvocation`.
@@ -496,11 +493,10 @@ You've already used two types of middleware earlier in this session: `UseLogging
 When you register an `IChatClient` using code like this:
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
+hostBuilder.Services.AddChatClient(innerChatClient)
     .UseLogging()
     .UseFunctionInvocation()
-    .UseOpenTelemetry()
-    .Use(innerChatClient));
+    .UseOpenTelemetry();
 ```
 
 ... that's actually shorthand for something like:
@@ -518,8 +514,6 @@ hostBuilder.Services.AddSingleton(services =>
     return client3;
 });
 ```
-
-*Sidenote: it's actually registered as scoped today, but that's about to change to singleton*
 
 So as you can see, the pipeline is a sequence of `IChatClient` instances, each of which holds a reference to the next one in the chain, until the final "inner" chat client (which is usually one that calls an external AI service over the network).
 
@@ -592,10 +586,9 @@ The "clean up" phase here is optional. Doing this means the caller's chat histor
 Now to use this, update your `AddChatClient` near the top of `Program.cs`:
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
+hostBuilder.Services.AddChatClient(innerChatClient)
     .UseLanguage("Welsh")
-    .UseFunctionInvocation()
-    .Use(innerChatClient));
+    .UseFunctionInvocation();
 ```
 
 Now even if you talk to it in English, you should get back a reply in Welsh:
@@ -616,11 +609,10 @@ You're not limited to prompt augmentation. You can use arbitrary logic to decide
 Can you build a middleware step that is used as follows?
 
 ```cs
-hostBuilder.Services.AddChatClient(pipeline => pipeline
+hostBuilder.Services.AddChatClient(innerChatClient)
     .UseLanguage("Welsh")
     .UseRateLimit(TimeSpan.FromSeconds(5))
-    .UseFunctionInvocation()
-    .Use(innerChatClient));
+    .UseFunctionInvocation();
 ```
 
 ... and delays any incoming call so the user can't make more than one request every 5 seconds?

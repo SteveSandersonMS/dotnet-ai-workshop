@@ -20,12 +20,11 @@ IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuratio
 
 // Register services
 builder.Services.AddHostedService<Chatbot>();
-builder.Services.AddEmbeddingGenerator<string, Embedding<float>>(pipeline => pipeline
-    .Use(new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm")));
+builder.Services.AddEmbeddingGenerator(
+    new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm"));
 builder.Services.AddSingleton(new QdrantClient("127.0.0.1"));
-builder.Services.AddChatClient(pipeline => pipeline
-    .UseFunctionInvocation()
-    .Use(innerChatClient));
+builder.Services.AddChatClient(innerChatClient)
+    .UseFunctionInvocation();
 
 // Go
 await builder.Build().RunAsync();

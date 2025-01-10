@@ -18,8 +18,7 @@ var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"
 // Or for Ollama:
 //var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");
 
-hostBuilder.Services.AddChatClient(pipeline => pipeline
-    .Use(innerChatClient));
+hostBuilder.Services.AddChatClient(innerChatClient);
 
 // Run the app
 var app = hostBuilder.Build();

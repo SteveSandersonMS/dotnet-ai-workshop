@@ -15,20 +15,19 @@ IChatClient innerChatClient = new AzureOpenAIClient(new Uri(config["AzureOpenAI:
 // Or for Ollama:
 //IChatClient innerChatClient = new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1");
 
-var chatClient = new ChatClientBuilder()
+var chatClient = new ChatClientBuilder(innerChatClient)
     .UseFunctionInvocation()
     .UseRetryOnRateLimit()
-    .Use(innerChatClient);
+    .Build();
 
 // There's nothing to stop you from using a different LLM for evaluation vs the one that actually powers the chatbot
 // In fact, really you *should* use the best LLM you can for scoring, even when testing out a smaller model for the chatbot
 // In this case we'll use the same for both, since you might only have access to one of them.
-var evaluationChatClient = new ChatClientBuilder()
+var evaluationChatClient = new ChatClientBuilder(innerChatClient)
     .UseRetryOnRateLimit()
-    .Use(innerChatClient);
+    .Build();
 
-var embeddingGenerator = new EmbeddingGeneratorBuilder<string, Embedding<float>>()
-    .Use(new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm"));
+var embeddingGenerator = new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm");
 
 var qdrantClient = new QdrantClient("127.0.0.1");
 var isOllama = evaluationChatClient.GetService<OllamaChatClient>() is not null;

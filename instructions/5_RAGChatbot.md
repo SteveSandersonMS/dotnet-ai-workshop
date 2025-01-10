@@ -548,18 +548,21 @@ We'll now try changing various parts of the system and determine what makes it b
 Find where `evaluationChatClient` is defined and update it *not* to use `innerChatClient`. Instead, make it have its own independent underlying provider, e.g., for OpenAI:
 
 ```cs
-var evaluationChatClient = new ChatClientBuilder()
+var evaluationChatClient = new ChatClientBuilder(
+        new AzureOpenAIClient(
+            new Uri(config["AzureOpenAI:Endpoint"]!),
+            new ApiKeyCredential(config["AzureOpenAI:Key"]!)).AsChatClient("gpt-4o-mini"))
     .UseRetryOnRateLimit()
-    .Use(new AzureOpenAIClient(new Uri(config["AzureOpenAI:Endpoint"]!), new ApiKeyCredential(config["AzureOpenAI:Key"]!))
-        .AsChatClient("gpt-4o-mini"));
+    .Build();
 ```
 
 ... or for Ollama:
 
 ```cs
-var evaluationChatClient = new ChatClientBuilder()
+var evaluationChatClient = new ChatClientBuilder(
+        new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1"))
     .UseRetryOnRateLimit()
-    .Use(new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1"));
+    .Build();
 ```
 
 Then, even if you change `innerChatClient`, you can leave `evaluationChatClient` unchanged.

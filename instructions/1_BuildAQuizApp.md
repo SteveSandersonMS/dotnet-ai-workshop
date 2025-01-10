@@ -97,11 +97,10 @@ In `Program.cs`, see the `TODO` comment block near the top. Replace it with one 
 
     Get both of these values from Azure OpenAI Studio. Notice that for Endpoint, **you're only supplying the part of the URL up the the end of the host**. Don't include `openai/deployments/...` or whatever else appears after it in Azure OpenAI Studio.
 
-Next, register this in DI. You could just register `innerChatClient` directly, but we'll use the following helper that allows you to configure a pipeline, which we'll use in further sessions:
+Next, register this in DI. You could just register `innerChatClient` directly by calling `builder.Services.AddSingleton(...)`, but we'll use the following helper that allows you to configure a pipeline, which we'll use in further sessions:
 
 ```cs
-builder.Services.AddChatClient(pipeline => pipeline
-    .Use(innerChatClient));
+builder.Services.AddChatClient(innerChatClient);
 ```
 
 ## Generate questions
