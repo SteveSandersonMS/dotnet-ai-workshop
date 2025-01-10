@@ -68,7 +68,7 @@ public class ChatbotThread(
 
         // perform corrective retrieval if needed
 
-        if (allContext.Count == 0)
+        if (allContext.Count < 2)
         {
             var planGenerator = new PlanGenerator(chatClient);
 
@@ -103,6 +103,7 @@ public class ChatbotThread(
 
             while (planOrResult.Plan is not null)
             {
+                // pass bing search ai function so that the executor can search web for additional material
                 res = await stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
                 pastSteps.Add(res);
 
