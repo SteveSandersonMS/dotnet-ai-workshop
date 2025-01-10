@@ -46,7 +46,8 @@ Jump in wherever you like. If you're new to this, starting at chapter 1 makes se
 | 1 | [Build a Quiz App](./instructions/1_BuildAQuizApp.md) | Get started quickly with a casual exercise. This helps build familiarity with using LLMs without needing too much theory. | Chat completion. Prompt engineering. Prompt injection. |
 | 2 | [Embeddings](./instructions/2_Embeddings.md) | Learn how to compute the semantic similarity of text and perform semantic search. This is a basic building block for many AI features. | Embeddings. Semantic search. |
 | 3 | [Vector Search](./instructions/3_VectorSearch.md) | Build an index of embeddings for high-performance semantic search. | Vector databases. FAISS. |
-| 4 | [Language Models](./instructions/4_LanguageModels.md) | Use LLMs to implement a range of application features. | Completion. Streaming. Structured output. Function calling. Chatbots. Middleware.
-| 5 | [Retrieval Augmented Generation](./instructions/5_RAGChatbot.md) | Implement an end-to-end Q&A chatbot, from data ingestion to quality evaluation. | Ingestion. Chunking. Embedding. Retrieval. Citations. Evaluation. RAG triad. |
-| 6 | [Vision](./instructions/6_Vision.md) | Combine multi-modal models with earlier topics to build an image monitoring system. | Multi-modality. Structured output. Small models. Caching. |
-| 7 | [Realtime](./instructions/7_Realtime.md) | Produce responses in realtime using an audio-to-audio model, creating a voice assistant. | Realtime APIs |
+| 4 | [Language Models (Part 1)](./instructions/4_LanguageModels_Part1.md) | Use LLMs to implement a range of application features. | Completion. Streaming. Structured output.
+| 5 | [Language Models (Part 2)](./instructions/5_LanguageModels_Part2.md) | Use LLMs to implement a range of application features. | Function calling. Chatbots. Middleware.
+| 6 | [Retrieval Augmented Generation](./instructions/6_RAGChatbot.md) | Implement an end-to-end Q&A chatbot, from data ingestion to quality evaluation. | Ingestion. Chunking. Embedding. Retrieval. Citations. Evaluation. RAG triad. |
+| 7 | [Vision](./instructions/7_Vision.md) | Combine multi-modal models with earlier topics to build an image monitoring system. | Multi-modality. Structured output. Small models. Caching. |
+| 8 | [Realtime](./instructions/8_Realtime.md) | Produce responses in realtime using an audio-to-audio model, creating a voice assistant. | Realtime APIs |
