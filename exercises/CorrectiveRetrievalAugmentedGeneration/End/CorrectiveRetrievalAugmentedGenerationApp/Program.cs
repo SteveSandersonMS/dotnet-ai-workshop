@@ -26,6 +26,13 @@ builder.Services.AddEmbeddingGenerator(
     new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm"));
 builder.Services.AddSingleton(new QdrantClient("127.0.0.1"));
 builder.Services.AddChatClient(innerChatClient);
+builder.Services.AddSingleton<BingSearchTool>(b =>
+{
+    var httpClient = b.GetRequiredService<HttpClient>();
+    return new BingSearchTool(
+        builder.Configuration["BingSearch:Key"]!,
+        httpClient);
+});
 
 // Go
 await builder.Build().RunAsync();
