@@ -22,18 +22,18 @@ if (!await qdrantClient.CollectionExistsAsync("manuals"))
     await qdrantClient.CreateCollectionAsync("manuals", new VectorParams { Size = 384, Distance = Distance.Cosine });
 }
 
-var manualPdfDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../data/product-manuals"));
+string manualPdfDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../data/product-manuals"));
 ulong pointId = 0;
-foreach (var filePath in Directory.EnumerateFiles(manualPdfDir, "*.pdf"))
+foreach (string filePath in Directory.EnumerateFiles(manualPdfDir, "*.pdf"))
 {
-    var productId = int.Parse(Path.GetFileNameWithoutExtension(filePath));
+    int productId = int.Parse(Path.GetFileNameWithoutExtension(filePath));
     Console.WriteLine($"Ingesting manual for product {productId}...");
 
     using var pdf = PdfDocument.Open(filePath);
     foreach (var page in pdf.GetPages())
     {
         // [1] Parse (PDF page -> string)
-        var pageText = GetPageText(page);
+        string pageText = GetPageText(page);
 
         // [2] Chunk (split into shorter strings on natural boundaries)
         var paragraphs = TextChunker.SplitPlainTextParagraphs([pageText], 200);
