@@ -97,35 +97,35 @@ public class ChatbotThread(
 
             List<PanStepExecutionResult> pastSteps = [];
 
-            var res = await  stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
+            // pass bing search ai function so that the executor can search web for additional material
+
+            var bingSearchTool = chatClient.GetService<BingSearchTool>();
+
+            Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
+            {
+                var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
+
+                return string.Join("\n", results.Select(c => $"""
+                                                              ## web page: {c.Url}
+                                                              # Content
+                                                              {c.Snippet}
+
+                                                              """));
+            };
+
+            var options = new ChatOptions
+            {
+                Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
+                ToolMode = ChatToolMode.Auto
+            };
+
+            var res = await  stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
             pastSteps.Add(res);
 
             var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
 
             while (planOrResult.Plan is not null)
             {
-                // pass bing search ai function so that the executor can search web for additional material
-
-                var bingSearchTool = chatClient.GetService<BingSearchTool>();
-
-                Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
-                {
-                    var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
-
-                    return string.Join("\n", results.Select(c =>$"""
-                                               ## web page: {c.Url}
-                                               # Content
-                                               {c.Snippet}
-                                               
-                                               """));
-                };
-
-                var options = new ChatOptions
-                {
-                    Tools = [AIFunctionFactory.Create(searchTool,name:"bing_web_search", description:"This tools uses bing to search the web for answers")],
-                    ToolMode = ChatToolMode.Auto
-                };
-
                 res = await stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
                 pastSteps.Add(res);
 
