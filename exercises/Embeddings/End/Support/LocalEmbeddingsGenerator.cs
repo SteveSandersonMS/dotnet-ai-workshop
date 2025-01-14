@@ -20,8 +20,8 @@ public class LocalEmbeddingsGenerator : IEmbeddingGenerator<string, Embedding<fl
         return Task.FromResult(result);
     }
 
-    public TService? GetService<TService>(object? key = null) where TService : class
-        => key is null ? this as TService : null;
+    public object? GetService(Type serviceType, object? key = null)
+        => key is null ? this : null;
 
     private static ReadOnlyMemory<float> Normalize(ReadOnlyMemory<float> vec)
     {
