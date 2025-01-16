@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C806DBF7
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Planner.Tests", "Planner.Tests\Planner.Tests.csproj", "{C2AF0ADF-58FA-409A-9D87-7F7C29360E05}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CorrectiveRetrievalAugmentedGenerationApp", "CorrectiveRetrievalAugmentedGenerationApp\CorrectiveRetrievalAugmentedGenerationApp.csproj", "{D9052D8C-C1A4-4295-8CFD-0A725D48CEAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{C2AF0ADF-58FA-409A-9D87-7F7C29360E05}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2AF0ADF-58FA-409A-9D87-7F7C29360E05}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2AF0ADF-58FA-409A-9D87-7F7C29360E05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9052D8C-C1A4-4295-8CFD-0A725D48CEAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9052D8C-C1A4-4295-8CFD-0A725D48CEAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9052D8C-C1A4-4295-8CFD-0A725D48CEAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9052D8C-C1A4-4295-8CFD-0A725D48CEAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

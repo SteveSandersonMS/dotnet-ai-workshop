@@ -51,99 +51,11 @@ public class ChatbotThread(
             PageNumber : (int)c.Payload["pageNumber"].IntegerValue)
         );
 
-        Dictionary<ulong, Chunk> chunksForResponseGeneration = [];
-
-        // calculate relevancy
-
-        ContextRelevancyEvaluator contextRelevancyEvaluator = new(chatClient);
+       Dictionary<ulong, Chunk> chunksForResponseGeneration = [];
 
         foreach (var retrievedContext in closestChunksById.Values)
         {
-            var score = await contextRelevancyEvaluator.EvaluateAsync(userMessage, retrievedContext.Text, cancellationToken);
-            if (score.ContextRelevance!.ScoreNumber > 0.7)
-            {
-                chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
-            }
-        }
-
-        // perform corrective retrieval if needed
-
-        if (chunksForResponseGeneration.Count < 2)
-        {
-            var planGenerator = new PlanGenerator(chatClient);
-
-            var toolCallingClient = new FunctionInvokingChatClient(chatClient);
-            var stepExecutor = new PlanExecutor(toolCallingClient);
-
-            var evaluator = new PlanEvaluator(chatClient);
-
-            string task = $"""
-                           Given the <user_question>, search the product manuals for relevant information.
-                           Look for information that may answer the question, and provide a response based on that information.
-                           The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
-
-                           <user_question>
-                           {userMessage}
-                           </user_question>
-
-                           <context>
-                           {string.Join("\n", closestChunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
-                           </context>
-                           """;
-
-            var plan = await planGenerator.GeneratePlanSync(
-                task
-                , cancellationToken);
-
-            List<PanStepExecutionResult> pastSteps = [];
-
-            // pass bing search ai function so that the executor can search web for additional material
-
-            var bingSearchTool = chatClient.GetService<BingSearchTool>();
-
-            Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
-            {
-                var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
-
-                return string.Join("\n", results.Select(c => $"""
-                                                              ## web page: {c.Url}
-                                                              # Content
-                                                              {c.Snippet}
-
-                                                              """));
-            };
-
-            var options = new ChatOptions
-            {
-                Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
-                ToolMode = ChatToolMode.Auto
-            };
-
-            var res = await  stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
-            pastSteps.Add(res);
-
-            var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
-
-            while (planOrResult.Plan is not null)
-            {
-                res = await stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
-                pastSteps.Add(res);
-
-                planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
-            }
-
-            // we add a fake entry to the chunks by id so that we can add the answer to the context
-            ulong key = chunksForResponseGeneration.Keys.Max() + 1;
-            if (planOrResult.Result is not null)
-            {
-                chunksForResponseGeneration[key] = new Chunk(
-                
-                    Id : key,
-                    Text : planOrResult.Result.Outcome,
-                    ProductId : currentProduct.ProductId,
-                    PageNumber : 1
-                );
-            }
+            chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
         }
         
         // Log the closest manual chunks for debugging (not using ILogger because we want color)
