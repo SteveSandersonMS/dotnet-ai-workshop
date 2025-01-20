@@ -1,22 +1,24 @@
-# Agentic RAG, corrective rag (CRAG)
+# Agentic RAG and Corrective RAG (CRAG)
 
-Retrieving information to help generative AI is a delicate process, it is easy to get started with searches adn vector searches but it is hard to ensure the right data is loaded. **Agentic RAG** approaches are bringing in more power and approaches to load context to satisfy the user requests and application goals.
+Retrieving information to help generative AI is a delicate process. It is easy to get started with searches and vector searches, but it is hard to ensure the right data is loaded. **Agentic RAG** approaches bring in more power to load context to satisfy user requests and application goals.
 
-In its msot simple form an agent perform the following loop
+In its most simple form, an agent performs the following loop:
+
 ```mermaid
 graph TD;
     A[Perception] --> B[Planning];
     B --> C[Action];
     C --> D[Evaluation]
     D --> A
-
 ```
 
-Using generative ai and providing tools to teh `Action` step the agent is able to consume additional logic.
+Using generative AI and providing tools to the `Action` step, the agent is able to consume additional logic.
 
-**Corrective RAG** systems (**CRAG**) reson about the user request and the current context, it then evaluates how supportive and useful it is, if the context can help accomplising the task the response is generated otherwise it will plan actions to cover the gap in the context. A classic approach here is to try to use in house data (this could be a vector search like in [RAG Chatbot](6_RAGChatbot.md)) and after evaluating the context relevancy it might need to search the web using search engine like [Bing](www.bing.com) to supplement the missing parts. It could also generate better query to probe again the **RAG** element
+A **corrective retrieval-augmented generation (CRAG)** system reasons about the user request and the current context. It evaluates how supportive and useful the context is. If the context is sufficient to accomplish the task, the response is generated. Otherwise, the system will plan actions to cover the gap in the context.
 
-In this exercise you will build on top of the [RAG Chatbot](6_RAGChatbot.md) and tool calling example to implement a **CRAG** system for the [eShopSupport](https://github.com/dotnet/eShopSupport)
+A classic approach here is to try to use in-house data, often a vector search as in basic RAG. After evaluating the context relevance, the system may choose to supplement the missing parts by searching the web using a search engine like [Bing](https://www.bing.com). Alternatively the system may generate a better query to probe again within the RAG element.
+
+In this exercise you will build on top of the earlier [RAG chatbot and tool calling example](./6_RAGChatbot.md) to implement a CRAG system.
 
 ## Project setup
 
@@ -28,24 +30,38 @@ If you're not already running Qdrant, start it in Docker now:
 docker run -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage:z -d qdrant/qdrant
 ```
 
-If you have not populate (if you already completed the [RAG Chatbot](6_RAGChatbot.md) lesson you should be good to go now) the collection then load pdfs:
+### Populating Qdrant
 
- * Open the project `exercises/CorrectiveRetrievalAugmentedGeneration/Begin`
+If your Qdrant Docker volume (`qdrant_storage`) already contains the sample PDF chunks because you did the [RAG Chatbot](6_RAGChatbot.md) session, you can skip this part.
+
+Otherwise, populate your Qdrant storage as follows:
+
+ * Open the project `exercises/RetrievalAugmentedGeneration/End` (and notice this path contains `End`, not `Begin`)
  * If you're using VS, ensure that `Ingestion` is marked as the startup project. For non-VS users, `Ingestion` is the project you should be ready to `dotnet run`.
  * Open `Program.cs`. Follow the instructions at the top, which explain how to:
    * Make sure Ollama is running and has the `all-minilm` model available
    * Make sure Qdrant, a vector database, is running in Docker
 
-If you run the project, you should see it claim to ingest many PDFs, this is will populate a collection in the [Qdrant](https://qdrant.tech/) .
+If you run the project, you should see it claim to ingest many PDFs. This will populate a collection in Qdrant. This might take a minute or two.
 
-This might take a minute or so. While it's going, you might like to go into the Qdrant dashboard at http://localhost:6333/dashboard. You should see it has a single collection called `manuals`, and if you go into it and visit the *Info* tab, it should say it has `points_count` of some amount. It doesn't update continuously, but if you refresh every few seconds you'll see the count go up.
+To learn more about how PDFs are ingested (i.e., how they are parsed, chunked, and embedded), you can refer back to the [RAG Chatbot](6_RAGChatbot.md) session.
 
-When your ingestion process completes, you should have thousands of "points" (i.e., chunks of text from product manuals) in your vector database.
+### Starting services
+
+Make sure you're running Ollama and that you have the `all-minilm` model available. If you're not sure, run:
+
+```
+ollama pull all-minilm
+ollama serve
+```
+
+If `ollama serve` returns the error *tcp 127.0.0.1:11434: bind: Only one usage of each socket address*, be sure to first close any existing instance of Ollama (e.g., from the system tray on Windows) before running `ollama serve` again.
 
 ## Implementing the CRAG chatbot
 
-Switch over to work on the `CorrectiveRetrievalAugmentedGenerationApp` project.
+Switch over to work on the CRAG project:
 
+ * Open the project `exercises/CorrectiveRetrievalAugmentedGeneration/Begin`
  * For VS users, set `CorrectiveRetrievalAugmentedGenerationApp` as the startup project
  * Everyone else, prepare to `dotnet run` in the `CorrectiveRetrievalAugmentedGenerationApp` directory
 
@@ -55,35 +71,42 @@ Find where `IChatClient innerChatClient` is declared and make sure it's using th
 
 ### Ranking and filtering RAG results 
 
-Inside `ChatbotThread.cs`, you'll see that `AnswerAsync` currently just perfoming a search oepration over the manual chunks and then trying to generate the answer.
+Inside `ChatbotThread.cs`, you'll see that `AnswerAsync` currently just performs a search operation over the manual chunks and then tries to generate an answer.
 
-The approach here is the **Predetermined context** as see in the [RAG Chatbot](6_RAGChatbot.md) sample, the code gets the 3 best matches it can find in the vector store.
+The approach here is *predetermined context* as seen in the [RAG Chatbot](6_RAGChatbot.md) sample. The code gets the 3 best matches it can find in the vector store.
 
 We will take this further and use the LLM to evaluate how relevant are the chunks we have retrieved. 
 The class `ContextRelevancyEvaluator` can help us ranking and filtering the chunks. 
 
-When performing the semantic search we have found the closest matches using vector search, this is a similarity measure, not a measure of how relevant are the chunks to the user question.
-Using LLM to reason about **Context Relevancy** means to ask it to score how useful is the context to satisfy a user question.
+When performing the semantic search we have found the closest matches using vector search. This is a similarity measure, not a measure of how relevant the chunks are to the user question.
+Using an LLM to reason about *context relevancy* means to ask it to score how useful the context is to satisfying a user question.
 
-We will use it to refine the chunk to be used later in the answer generation. The code to filter will look like the following
+Let's do it. Inside `ChatbotThread.cs`'s `AnswerAsync` method, replace these lines:
 
 ```cs
-Dictionary<ulong, Chunk> chunksForResponseGeneration = [];
+// For basic RAG, we just add *all* the chunks to context, ignoring relevancy
+var chunksForResponseGeneration = closestChunksById.Values.ToDictionary(c => c.Id, c => c);
+```
 
-// calculate relevancy
+... with this improved alternative:
 
-ContextRelevancyEvaluator contextRelevancyEvaluator = new(chatClient);
-
+```cs
+// For improved RAG, add only the truly relevant chunks to context
+var chunksForResponseGeneration = new Dictionary<ulong, Chunk>();
+var contextRelevancyEvaluator = new ContextRelevancyEvaluator(chatClient);
 foreach (var retrievedContext in closestChunksById.Values)
 {
     var score = await contextRelevancyEvaluator.EvaluateAsync(userMessage, retrievedContext.Text, cancellationToken);
-    if (score.ContextRelevance!.ScoreNumber > 0.7)
+    if (score.ContextRelevance?.ScoreNumber >= 0.7)
     {
         chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
     }
 }
 ```
-Inside the `ContextRelevancyEvaluator.cs` file we can see the logic used to ask the LLM to perform ranking:
+
+### How it works
+
+Inside `ContextRelevancyEvaluator.cs` we can see the logic used to ask the LLM to perform ranking:
 
 ```cs
 public async Task<EvaluationResponse> EvaluateAsync(string question, string context, CancellationToken cancellationToken)
@@ -118,26 +141,26 @@ public async Task<EvaluationResponse> EvaluateAsync(string question, string cont
 
     if (response.TryGetResult(out var score) && score.Populated)
     {
-
         return score;
     }
 
     throw new InvalidOperationException("Invalid response from the AI assistant");
 }
 ```
-Returning a structured object instead of a string makes it easier to integrate LLM in traditional code.
+Returning a structured object instead of a string makes it easier to integrate an LLM in traditional code.
 
 ### Correcting the aim
 
-Now that we have discarded non relevant context we might need additional material. This is the corrective part of the algorythm.
-There are few approaches possible
+Now that we have discarded irrelevant context we might need additional material. This is the corrective part of the algorthm. There are few approaches possible
 
-1. **Query Rewriting**
+1. **Query rewriting**
   
-  [Query Rewriting](https://medium.com/@florian_algo/advanced-rag-06-exploring-query-rewriting-23997297f2d1)
-  uses the current avilable context and user question we ask llm to generate new questions that can help addressing the original user goal. We can for example have 5 more questions and use this ones again to load chunks from the **RAG** system.
+   [Query rewriting](https://medium.com/@florian_algo/advanced-rag-06-exploring-query-rewriting-23997297f2d1) takes the current available context and user question, and asks the LLM to generate new questions that could address the user's original goal. For example, we could generate five more questions (i.e., different phrasings of the user's goal) and use these to load more chunks from the vector store.
 
 2. **HyDE (Hypothetical Document Embeddings)**
-  This approach is about enhancing information retrieval by using "fake" or hypothetical documents. 
 
-  [HyDE](https://medium.com/etoai/advanced-rag-precise-zero-shot-dense-retrieval-with-hyde-0946c54dfdcb) uses (LLMs) to generate hypothetical answers to queries. These answers are then turned into vector embeddings and placed in the same space as real documents. When a search is performed, the system finds real documents that best match the hypothetical answer, even if they don't match the exact words in the search query. This method captures the intent behind the query, ensuring that the retrieved documents are contextually relevant.
+   Instead of generating hypothetical user inputs as above, [HyDE](https://medium.com/etoai/advanced-rag-precise-zero-shot-dense-retrieval-with-hyde-0946c54dfdcb) generates hypothetical documents to be indexed in your vector store.
+
+   This is done using LLMs to generate hypothetical answers to queries. These answers are then turned into vector embeddings and placed in the same space as real documents. When a search is performed, the system may find these hypothetical documents, and if it does, the search results are amended to be the corresponding real documents from which the hypotheticals were derived.
+
+*Query rewriting* and *HyDE* are closely related in that they both aim to improve retrieval by allowing for alternate ways to phrase things. A difference between the two is that query rewriting computes those alternatives at runtime during each query, whereas HyDE computes the alternatives just once up front.
