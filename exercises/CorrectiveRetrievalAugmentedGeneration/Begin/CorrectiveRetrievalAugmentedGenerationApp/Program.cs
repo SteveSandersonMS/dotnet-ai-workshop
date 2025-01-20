@@ -1,5 +1,4 @@
 ﻿using System.ClientModel;
-
 using Azure.AI.OpenAI;
 using CorrectiveRetrievalAugmentedGenerationApp;
 using Microsoft.Extensions.AI;
@@ -7,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
 using Qdrant.Client;
 
 // Set up app host
@@ -26,7 +24,6 @@ builder.Services.AddEmbeddingGenerator(
     new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm"));
 builder.Services.AddSingleton(new QdrantClient("127.0.0.1"));
 builder.Services.AddChatClient(innerChatClient);
-
 
 // Go
 await builder.Build().RunAsync();

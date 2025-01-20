@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.AI;
-using Planner;
+﻿using Microsoft.Extensions.AI;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
@@ -15,21 +12,14 @@ public class ChatbotThread(
 {
     private readonly List<ChatMessage> _messages =
     [
-        new(ChatRole.System, $"""
-                              You are a helpful assistant, here to help customer service staff answer questions they have received from customers.
-                              The support staff member is currently answering a question about this product:
-                              ProductId: ${currentProduct.ProductId}
-                              Brand: ${currentProduct.Brand}
-                              Model: ${currentProduct.Model}
-                              """),
-        /*
-        Answer the user question using ONLY information found by searching product manuals.
-            If the product manual doesn't contain the information, you should say so. Do not make up information beyond what is
-            given in the product manual.
-            
-            If this is a question about the product, ALWAYS search the product manual before answering.
-            Only search across all product manuals if the user explicitly asks for information about all products.
-        */
+        new(ChatRole.System,
+            $"""
+            You are a helpful assistant, here to help customer service staff answer questions they have received from customers.
+            The support staff member is currently answering a question about this product:
+            ProductId: ${currentProduct.ProductId}
+            Brand: ${currentProduct.Brand}
+            Model: ${currentProduct.Model}
+            """),
     ];
 
     public async Task<(string Text, Citation? Citation, string[] AllContext)> AnswerAsync(string userMessage, CancellationToken cancellationToken = default)
@@ -42,41 +32,17 @@ public class ChatbotThread(
             vector: userMessageEmbedding.ToArray(),
             filter: Conditions.Match("productId", currentProduct.ProductId),
             limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
-        
-        Dictionary<ulong, Chunk> closestChunksById = closestChunks.ToDictionary(c => c.Id.Num, c => new Chunk
-        (
-            Id : c.Id.Num,
-            Text : c.Payload["text"].StringValue,
-            ProductId : (int)c.Payload["productId"].IntegerValue,
-            PageNumber : (int)c.Payload["pageNumber"].IntegerValue)
-        );
 
-       Dictionary<ulong, Chunk> chunksForResponseGeneration = [];
+        var closestChunksById = closestChunks.ToDictionary(
+            c => c.Id.Num,
+            c => new Chunk(
+                Id: c.Id.Num,
+                Text: c.Payload["text"].StringValue,
+                ProductId: (int)c.Payload["productId"].IntegerValue,
+                PageNumber: (int)c.Payload["pageNumber"].IntegerValue));
 
-        foreach (var retrievedContext in closestChunksById.Values)
-        {
-            chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
-        }
-        
-        // Log the closest manual chunks for debugging (not using ILogger because we want color)
-        //Console.WriteLine("Retrieved chunks via rag");
-        //foreach (var chunk in closestChunks)
-        //{
-        //    Console.ForegroundColor = ConsoleColor.DarkYellow;
-        //    Console.WriteLine($"[Score: {chunk.Score:F2}, File: {chunk.Payload["productId"].IntegerValue}.pdf, Page: {chunk.Payload["pageNumber"].IntegerValue}");
-        //    Console.ForegroundColor = ConsoleColor.DarkGray;
-        //    Console.WriteLine(chunk.Payload["text"].StringValue);
-        //}
-
-        //Console.WriteLine("Chunks relevant to the question");
-        //foreach (var chunk in chunksForResponseGeneration.Values)
-        //{
-        //    Console.ForegroundColor = ConsoleColor.Green;
-        //    Console.WriteLine($"[ File: {chunk.ProductId}.pdf, Page: {chunk.PageNumber}");
-        //    Console.ForegroundColor = ConsoleColor.DarkGray;
-        //    Console.WriteLine(chunk.Text);
-        //}
-
+        // For basic RAG, we just add *all* the chunks to context, ignoring relevancy
+        var chunksForResponseGeneration = closestChunksById.Values.ToDictionary(c => c.Id, c => c);
 
         // Now ask the chatbot
         _messages.Add(new(ChatRole.User, $$"""
@@ -94,15 +60,15 @@ public class ChatbotThread(
             }
             """));
 
-        bool isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-        ChatCompletion<ChatBotAnswer> response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
+        var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
+        var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
         _messages.Add(response.Message);
 
         if (response.TryGetResult(out ChatBotAnswer? answer))
         {
             // If the chatbot gave a citation, convert it to info to show in the UI
-            Citation? citation = answer.ManualExtractId.HasValue && chunksForResponseGeneration.TryGetValue((ulong)answer.ManualExtractId, out var chunk) 
-                ? new Citation(chunk.ProductId,chunk.PageNumber, answer.ManualQuote ?? "")
+            Citation? citation = answer.ManualExtractId.HasValue && chunksForResponseGeneration.TryGetValue((ulong)answer.ManualExtractId, out var chunk)
+                ? new Citation(chunk.ProductId, chunk.PageNumber, answer.ManualQuote ?? "")
                 : null;
 
             return (answer.AnswerText, citation, chunksForResponseGeneration.Values.Select(v => v.Text).ToArray());

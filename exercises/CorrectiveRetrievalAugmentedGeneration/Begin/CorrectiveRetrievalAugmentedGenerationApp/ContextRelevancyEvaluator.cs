@@ -36,7 +36,6 @@ public class ContextRelevancyEvaluator(IChatClient chatClient)
 
         if (response.TryGetResult(out var score) && score.Populated)
         {
-
             return score;
         }
 
