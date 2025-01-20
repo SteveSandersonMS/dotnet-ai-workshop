@@ -164,3 +164,36 @@ Now that we have discarded irrelevant context we might need additional material.
    This is done using LLMs to generate hypothetical answers to queries. These answers are then turned into vector embeddings and placed in the same space as real documents. When a search is performed, the system may find these hypothetical documents, and if it does, the search results are amended to be the corresponding real documents from which the hypotheticals were derived.
 
 *Query rewriting* and *HyDE* are closely related in that they both aim to improve retrieval by allowing for alternate ways to phrase things. A difference between the two is that query rewriting computes those alternatives at runtime during each query, whereas HyDE computes the alternatives just once up front.
+
+### Reasoning in agentic worflow
+
+    Agents implement a loop, when reasoning they use the cotnext and the objective to formualte a plan. In the loop they perform some action which can change the current context.
+    Changes to the context could lead to plan changes or the final goal. We will be using a **Plan, Step, Eval** approach.
+
+    First let's break down few thigns we need to consider.
+#### Making plans
+
+LLMs can generate plans to accomplish a goal giving us back a list of steps. If we use text in and text out the agentic loop becomes very weak as it will be as strong as the parsing logic will be. To improve our work we will be forcing the LLM itself to reason in terms of structured objects. In the project `StructuredPrediction` You will find some utilities to create a `IStructuredPredictor` from a `IChatClient`, have a look at the tests for the project.
+Since we will be using the `Planner` project this is how to use teh structured parser.
+
+In the following snippet we are using it to create a plan (see the implementation of the `PlanGenerator` class)
+// create a structures predictro from an instance of IChatClient
+```csharp
+
+IStructuredPredictor structuredPredictor = chatClient.ToStructuredPredictor([typeof(Plan)]);
+// user it to obtain a plan
+
+StructuredPredictionResult result = await structuredPredictor.PredictAsync([new ChatMessage(ChatRole.User, "create a plan to go to the moon")]);
+if (result.Value is not Plan plan)
+{
+    throw new InvalidOperationException("No plan generated");
+}
+...
+```
+
+We can provide a lsit of types when creating a `IStructuredPredictor`, this will accomplish the same as passing a discriminated union.
+The objective is to force the choice of one of the tyep provided.
+
+This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorythm.
+
+In the 
