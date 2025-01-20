@@ -16,9 +16,11 @@ Using generative AI and providing tools to the `Action` step, the agent is able 
 
 A **corrective retrieval-augmented generation (CRAG)** system reasons about the user request and the current context. It evaluates how supportive and useful the context is. If the context is sufficient to accomplish the task, the response is generated. Otherwise, the system will plan actions to cover the gap in the context.
 
-A classic approach here is to try to use in-house data, often a vector search as in basic RAG. After evaluating the context relevance, the system may choose to supplement the missing parts by searching the web using a search engine like [Bing](https://www.bing.com). Alternatively the system may generate a better query to probe again within the RAG element.
+A classic approach here is to try to use in-house data, often a vector search as in basic RAG. After evaluating the context relevance, the system may choose to supplement the missing parts by searching the web using a search engine like [Bing](https://www.bing.com). Alternatively the system may generate a better query to probe again within the RAG element. 
 
 In this exercise you will build on top of the earlier [RAG chatbot and tool calling example](./6_RAGChatbot.md) to implement a CRAG system.
+
+If you want to use **Bing** search tool you will need to provision keys, follow the instructions [here](https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/create-bing-search-service-resource).
 
 ## Project setup
 
@@ -167,10 +169,16 @@ Now that we have discarded irrelevant context we might need additional material.
 
 ### Reasoning in agentic worflow
 
-    Agents implement a loop, when reasoning they use the cotnext and the objective to formualte a plan. In the loop they perform some action which can change the current context.
-    Changes to the context could lead to plan changes or the final goal. We will be using a **Plan, Step, Eval** approach.
+Agenti approach to *RAG* takes a different way.
+Agents implement a loop, when reasoning they use the context and the objective to formualte a plan. In the loop they perform some action which can change the current context.
+Changes to the context could lead to plan changes or the final goal. 
 
-    First let's break down few thigns we need to consider.
+Worth mentioning [ReAct](https://docs.llamaindex.ai/en/stable/examples/agent/react_agent_with_query_engine/) and [Flare](https://docs.llamaindex.ai/en/stable/examples/query_engine/flare_query_engine/) retrrival approaches. They make a single step of retrieval and try to explore the problem space a step at a time, resoning on the knowledge gaps to fill and how to search the information to address such gaps. They use a limited maount of tokens because as they loop they mustate the current state without an overall vision. This get get into infinite loops as the agent doesn't know what has been already explored, is just focused on acoomplishing the final goal.
+
+We will be using a **Plan, Step, Eval** approach, so we can keep looking at the overal trajectory and what we have accomplished so far.
+
+First let's break down few thigns we need to consider and use.
+
 #### Making plans
 
 LLMs can generate plans to accomplish a goal giving us back a list of steps. If we use text in and text out the agentic loop becomes very weak as it will be as strong as the parsing logic will be. To improve our work we will be forcing the LLM itself to reason in terms of structured objects. In the project `StructuredPrediction` You will find some utilities to create a `IStructuredPredictor` from a `IChatClient`, have a look at the tests for the project.
@@ -196,4 +204,180 @@ The objective is to force the choice of one of the tyep provided.
 
 This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorythm.
 
-In the 
+You can now create a loop like this:
+```cs
+var planGenerator = new PlanGenerator(chatClient);
+
+var toolCallingClient = new FunctionInvokingChatClient(chatClient);
+var stepExecutor = new PlanExecutor(toolCallingClient);
+
+var evaluator = new PlanEvaluator(chatClient);
+
+string task = $"""
+                Given the <user_question>, search the product manuals for relevant information.
+                Look for information that may answer the question, and provide a response based on that information.
+                The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
+
+                <user_question>
+                {userMessage}
+                </user_question>
+
+                <context>
+                {string.Join("\n", closestChunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
+                </context>
+                """;
+
+var plan = await planGenerator.GeneratePlanSync(
+    task
+    , cancellationToken);
+
+List<PanStepExecutionResult> pastSteps = [];
+
+var res = await  stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
+pastSteps.Add(res);
+
+var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+
+while (planOrResult.Plan is not null)
+{
+    res = await stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
+    pastSteps.Add(res);
+
+    planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+}
+```
+
+This code block implements the loop we drscribed at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, That will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count ans the plan unfolds). 
+
+The objective here is to find more material and to do so we need some tools. If you want to use the bing search tool you will need your own BingAPI keys. Make sure to add it to the user secrets, they should look like this
+```js
+{
+  "AzureOpenAI": {
+    "Endpoint": "",
+    "Key": ""
+  },
+  "BingSearch": {
+    "Key": ""
+  }
+}
+```
+
+
+Let's create an instance of the client code, we can put it in the service collection in `Program.cs`:
+```cs
+builder.Services.AddSingleton<BingSearchTool>(b =>
+{
+    var httpClient = b.GetRequiredService<HttpClient>();
+    return new BingSearchTool(
+        builder.Configuration["BingSearch:Key"]!,
+        httpClient);
+});
+```
+
+Now we want to edit the code in `ContextRelevancyEvaluator.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`
+```cs
+var bingSearchTool = chatClient.GetService<BingSearchTool>();
+
+Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
+{
+    var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
+
+    return string.Join("\n", results.Select(c => $"""
+                                                  ## web page: {c.Url}
+                                                  # Content
+                                                  {c.Snippet}
+
+                                                  """));
+};
+
+var options = new ChatOptions
+{
+    Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
+    ToolMode = ChatToolMode.Auto
+};
+```
+
+So the **corrective** loop should now look like this:
+```cs
+if (chunksForResponseGeneration.Count < 2)
+{
+    var planGenerator = new PlanGenerator(chatClient);
+
+    var toolCallingClient = new FunctionInvokingChatClient(chatClient);
+    var stepExecutor = new PlanExecutor(toolCallingClient);
+
+    var evaluator = new PlanEvaluator(chatClient);
+
+    string task = $"""
+                    Given the <user_question>, search the product manuals for relevant information.
+                    Look for information that may answer the question, and provide a response based on that information.
+                    The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
+
+                    <user_question>
+                    {userMessage}
+                    </user_question>
+
+                    <context>
+                    {string.Join("\n", closestChunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
+                    </context>
+                    """;
+
+    var plan = await planGenerator.GeneratePlanSync(
+        task
+        , cancellationToken);
+
+    List<PanStepExecutionResult> pastSteps = [];
+
+    // pass bing search ai function so that the executor can search web for additional material
+
+    var bingSearchTool = chatClient.GetService<BingSearchTool>();
+
+    Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
+    {
+        var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
+
+        return string.Join("\n", results.Select(c => $"""
+                                                        ## web page: {c.Url}
+                                                        # Content
+                                                        {c.Snippet}
+
+                                                        """));
+    };
+
+    var options = new ChatOptions
+    {
+        Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
+        ToolMode = ChatToolMode.Auto
+    };
+
+    var res = await  stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
+    pastSteps.Add(res);
+
+    var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+
+    while (planOrResult.Plan is not null)
+    {
+        res = await stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
+        pastSteps.Add(res);
+
+        planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+    }
+
+    // we add a fake entry to the chunks by id so that we can add the answer to the context
+    ulong key = chunksForResponseGeneration.Keys.Max() + 1;
+    if (planOrResult.Result is not null)
+    {
+        chunksForResponseGeneration[key] = new Chunk(
+        
+            Id : key,
+            Text : planOrResult.Result.Outcome,
+            ProductId : currentProduct.ProductId,
+            PageNumber : 1
+        );
+    }
+}
+```
+
+Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
+
+We don't need to use bing search, we can use this loop to probe better our rag. This is a combinantion of **reasoning** and **query rewriting**
