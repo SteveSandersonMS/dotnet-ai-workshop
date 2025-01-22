@@ -31,6 +31,7 @@ If you're not already running Qdrant, start it in Docker now:
 ```
 docker run -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage:z -d qdrant/qdrant
 ```
+Check it is working by opening the [dashboard](http://localhost:6333/dashboard)
 
 ### Populating Qdrant
 
@@ -69,7 +70,7 @@ Switch over to work on the CRAG project:
 
 In `Program.cs`, you'll see there's quite a lot of setup code. But none of this is a chatbot at all. It's just setting up an `IChatClient`, and `IEmbeddingGenerator`, and a `QdrantClient`.
 
-Find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely either Azure OpenAI or Ollama.
+Find where `IChatClient innerChatClient` is declared and make sure it's using the Azure OpenAI backend as we will require to perform structured parsing.
 
 ### Ranking and filtering RAG results 
 
@@ -249,6 +250,10 @@ while (planOrResult.Plan is not null)
 
 This code block implements the loop we drscribed at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, That will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count ans the plan unfolds). 
 
+Since we are using a structured parsing approach (have a look at projects like [TypeChat](https://github.com/microsoft/typechat.net)) to see the power and control that this techniques gives compared to parsing.
+
+This is a good way to combine stocastic behaviours of LLMs (Machine learning in general) and deterministc behaviour of algorythms and data structures.
+
 The objective here is to find more material and to do so we need some tools. If you want to use the bing search tool you will need your own BingAPI keys. Make sure to add it to the user secrets, they should look like this
 ```js
 {
@@ -380,4 +385,6 @@ if (chunksForResponseGeneration.Count < 2)
 
 Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
 
-We don't need to use bing search, we can use this loop to probe better our rag. This is a combinantion of **reasoning** and **query rewriting**
+We don't need to use bing search, we can use this loop to probe better our rag. This is a combinantion of **reasoning** and **query rewriting**. 
+
+Be careful that we still need to ensure we do not perrfom infinite loops.

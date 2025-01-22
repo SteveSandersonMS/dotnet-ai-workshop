@@ -60,8 +60,7 @@ public class ChatbotThread(
             }
             """));
 
-        var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-        var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
+        var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: true);
         _messages.Add(response.Message);
 
         if (response.TryGetResult(out ChatBotAnswer? answer))

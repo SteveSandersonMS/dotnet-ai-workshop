@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
 using Planner;
 using Qdrant.Client;
@@ -101,7 +100,7 @@ public class ChatbotThread(
 
             var bingSearchTool = chatClient.GetService<BingSearchTool>();
 
-            Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
+            async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
             {
                 var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
 
@@ -111,11 +110,15 @@ public class ChatbotThread(
                                                               {c.Snippet}
 
                                                               """));
-            };
+            }
 
             var options = new ChatOptions
             {
-                Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
+                Tools =
+                [
+                    AIFunctionFactory.Create(SearchTool, name: "bing_web_search",
+                        description: "This tools uses bing to search the web for answers")
+                ],
                 ToolMode = ChatToolMode.Auto
             };
 
@@ -182,8 +185,8 @@ public class ChatbotThread(
             }
             """));
 
-        bool isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-        ChatCompletion<ChatBotAnswer> response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
+        ChatCompletion<ChatBotAnswer> response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: true);
+
         _messages.Add(response.Message);
 
         if (response.TryGetResult(out ChatBotAnswer? answer))

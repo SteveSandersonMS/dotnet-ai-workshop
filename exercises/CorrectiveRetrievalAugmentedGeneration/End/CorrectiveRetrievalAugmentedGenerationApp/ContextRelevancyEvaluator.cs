@@ -6,8 +6,6 @@ public class ContextRelevancyEvaluator(IChatClient chatClient)
 {
     public async Task<EvaluationResponse> EvaluateAsync(string question, string context, CancellationToken cancellationToken)
     {
-        bool isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-
         // Assess the quality of the answer
         // Note that in reality, "relevance" should be based on *all* the context we supply to the LLM, not just the citation it selects
         var response = await chatClient.CompleteAsync<EvaluationResponse>($$"""
@@ -32,7 +30,7 @@ public class ContextRelevancyEvaluator(IChatClient chatClient)
         Respond as JSON object of the form {
             "ContextRelevance": { "Justification": string, "ScoreLabel": string },
         }
-        """, useNativeJsonSchema: isOllama, cancellationToken: cancellationToken);
+        """, useNativeJsonSchema: true, cancellationToken: cancellationToken);
 
         if (response.TryGetResult(out var score) && score.Populated)
         {
