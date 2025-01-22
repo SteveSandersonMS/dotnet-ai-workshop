@@ -112,7 +112,7 @@ foreach (var retrievedContext in closestChunksById.Values)
 averageScore /= chunksForResponseGeneration.Count;
 ```
 
-You can use this code to filter the retrieved manual chunks to keep only the most relevant to the question and keeping track the overal relevancy of the final set.
+You can use this code to filter the retrieved manual chunks to keep only the most relevant to the question and keeping track the overall relevancy of the final set.
 
 ### How re-ranking works
 
@@ -159,7 +159,7 @@ Returning a structured object instead of a string makes it easier to integrate a
 
 ### Correcting the aim
 
-Now that we have discarded irrelevant context we might need additional material. This is the corrective part of the algorthm. 
+Now that we have discarded irrelevant context we might need additional material. This is the corrective part of the algorithm. 
 We might end with a `chunksForResponseGeneration` collection that does not contain enough (or at all) material, we need to find ways to improve it by adding more content there.
 
 There are few approaches possible, some of the most common are:
@@ -176,22 +176,22 @@ There are few approaches possible, some of the most common are:
 
 *Query rewriting* and *HyDE* are closely related in that they both aim to improve retrieval by allowing for alternate ways to phrase things. A difference between the two is that query rewriting computes those alternatives at runtime during each query, whereas HyDE computes the alternatives just once up front.
 
-### Reasoning in agentic worflow
+### Reasoning in agentic workflow
 
-Agenti approach to *RAG* takes a different way.
-Agents implement a loop, when reasoning they use the context and the objective to formualte a plan. In the loop they perform some action which can change the current context.
+Agentic approach to *RAG* takes a different way.
+Agents implement a loop, when reasoning they use the context and the objective to formulate a plan. In the loop they perform some action which can change the current context.
 Changes to the context could lead to plan changes or the final goal. 
 
-Worth mentioning [ReAct](https://docs.llamaindex.ai/en/stable/examples/agent/react_agent_with_query_engine/) and [Flare](https://docs.llamaindex.ai/en/stable/examples/query_engine/flare_query_engine/) retrrival approaches. They make a single step of retrieval and try to explore the problem space a step at a time, resoning on the knowledge gaps to fill and how to search the information to address such gaps. They use a limited maount of tokens because as they loop they mustate the current state without an overall vision. This get get into infinite loops as the agent doesn't know what has been already explored, is just focused on acoomplishing the final goal.
+Worth mentioning [ReAct](https://docs.llamaindex.ai/en/stable/examples/agent/react_agent_with_query_engine/) and [Flare](https://docs.llamaindex.ai/en/stable/examples/query_engine/flare_query_engine/) retrieval approaches. They make a single step of retrieval and try to explore the problem space a step at a time, reasoning on the knowledge gaps to fill and how to search the information to address such gaps. They use a limited amount of tokens because as they loop they mutate the current state without an overall vision. This get get into infinite loops as the agent doesn't know what has been already explored, is just focused on accomplishing the final goal.
 
-We will be using a **Plan, Step, Eval** approach, so we can keep looking at the overal trajectory and what we have accomplished so far.
+We will be using a **Plan, Step, Eval** approach, so we can keep looking at the overall trajectory and what we have accomplished so far.
 
-First let's break down few thigns we need to consider and use.
+First let's break down few things we need to consider and use.
 
 #### Making plans
 
 LLMs can generate plans to accomplish a goal giving us back a list of steps. If we use text in and text out the agentic loop becomes very weak as it will be as strong as the parsing logic will be. To improve our work we will be forcing the LLM itself to reason in terms of structured objects. In the project `StructuredPrediction` You will find some utilities to create a `IStructuredPredictor` from a `IChatClient`, have a look at the tests for the project.
-Since we will be using the `Planner` project this is how to use teh structured parser.
+Since we will be using the `Planner` project this is how to use the structured parser.
 
 In the following snippet we are using it to create a plan (see the implementation of the `PlanGenerator` class)
 
@@ -208,8 +208,8 @@ if (result.Value is not Plan plan)
 ```
 
 We can provide a list of types when creating a `IStructuredPredictor`, this will accomplish the same as passing a discriminated union.
-The objective is to force the choice of one of the tyep provided.
-This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorythm.
+The objective is to force the choice of one of the type provided.
+This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorithm.
 
 For example we can now write a loop that tries to look for more data to answer the user question like this:
 ```cs
@@ -256,11 +256,11 @@ while (planOrResult.Plan is not null)
 var answer = planOrResult.Result?.Outcome ?? "Sorry could not answer your question";
 ```
 
-This code block implements the loop we drscribed at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, that will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. 
-The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count ans the plan unfolds). 
+This code block implements the loop we described at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, that will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. 
+The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count as the plan unfolds). 
 Since we are using a structured parsing approach (have a look at projects like [TypeChat](https://github.com/microsoft/typechat.net)) to see the power and control that this techniques gives compared to parsing.
-This is a good way to combine stocastic behaviours of LLMs (Machine learning in general) and deterministc behaviour of algorythms and data structures.
-The objective here is to find more material and to do so we need some tools. If you want to use the bing search tool you will need your own BingAPI keys. Make sure to add it to the user secrets, they should look like this
+This is a good way to combine stochastic behaviours of LLMs (Machine learning in general) and deterministic behaviour of algorithms and data structures.
+The objective here is to find more material and to do so we need some tools. If you want to use the **Bing** search tool you will need your own BingAPI keys. Make sure to add it to the user secrets, they should look like this
 ```js
 {
   "AzureOpenAI": {
@@ -295,7 +295,7 @@ public class Chatbot(
     : IHostedService
 ```
 
-pass it to the `ChatbotThread` constructior:
+pass it to the `ChatbotThread` constructor:
 ```cs
 ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
 ```
@@ -430,10 +430,10 @@ if (planOrResult.Result is not null)
 Uses the correction outcome to add a reference entry, this collection is used to produce the final answer back to the customer including the citation.
 Use the code so far as a starting point to modify the `AnswerAsync` method in `ChatbotThread.cs`.
 Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
-We don't need to use bing search, we can use this loop to probe better our rag. 
+We don't need to use **Bing** search, we can use this loop to probe better our rag. 
 
 We can use a combination of **reasoning** and **query rewriting** to rephrase the user question to probe in different ways the `Qdrant` vector store too. 
-Be careful that we still need to ensure we do not perrfom infinite loops.
+Be careful that we still need to ensure we do not perform infinite loops.
 
 This is an example asking questions that are using the planner:
 ![Image](https://github.com/user-attachments/assets/139dc859-1fd1-467d-a714-520d2c4e2bcd)
