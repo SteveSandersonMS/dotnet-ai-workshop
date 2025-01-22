@@ -1,5 +1,8 @@
 ﻿using System.ClientModel;
+using System.Collections.Specialized;
+using System.Text.Json;
 using Azure.AI.OpenAI;
+
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.Extensions.AI;

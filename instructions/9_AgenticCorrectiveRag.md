@@ -22,6 +22,8 @@ In this exercise you will build on top of the earlier [RAG chatbot and tool call
 
 If you want to use **Bing** search tool you will need to provision keys, follow the instructions [here](https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/create-bing-search-service-resource).
 
+As an alternative you can use the class `DuckDuckGoSearchTool` in `DuckDuckGoSearchTool.cs`
+
 ## Project setup
 
 *Prerequisites: These instructions assume you've done earlier sessions, in particular session 1, which gives the basic environment setup steps.*

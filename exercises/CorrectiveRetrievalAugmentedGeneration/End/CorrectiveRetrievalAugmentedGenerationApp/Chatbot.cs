@@ -8,13 +8,17 @@ public class Chatbot(
     IChatClient chatClient,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
-    BingSearchTool bingSearch)
+    // use BingSearchTool
+    BingSearchTool bingSearchTool
+    // use DuckDuckGoSearchTool
+    //DuckDuckGoSearchTool duckDuckGoSearchTool
+    )
     : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         Product currentProduct = Helpers.GetCurrentProduct();
-        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
+        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearchTool);
 
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Assistant: Hi! You're looking at the {currentProduct.Model}. What do you want to know about it?");

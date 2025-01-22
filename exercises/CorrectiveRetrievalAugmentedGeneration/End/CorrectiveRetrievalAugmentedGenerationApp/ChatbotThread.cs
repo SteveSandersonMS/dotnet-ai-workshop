@@ -14,7 +14,11 @@ public class ChatbotThread(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
     Product currentProduct,
-    BingSearchTool bingSearchTool)
+    // use BingSearchTool
+    BingSearchTool bingSearchTool
+    // use DuckDuckGoSearchTool
+    //DuckDuckGoSearchTool duckDuckGoSearchTool
+    )
 {
     private readonly List<ChatMessage> _messages =
     [
@@ -117,12 +121,25 @@ public class ChatbotThread(
                                                               """));
             }
 
+            // pass duckduckgo search ai function so that the executor can search web for additional material
+
+            //async Task<string> SearchTool([Description("The questions we want to answer searching duckduckgo")] string userQuestion)
+            //{
+            //    var results = await duckDuckGoSearchTool!.SearchWebAsync(userQuestion, cancellationToken);
+
+            //    return $"""
+            //           ## web page: {results.Url}
+            //           # Content
+            //           {results.Abstract}
+            //           """;
+            //}
+
             var options = new ChatOptions
             {
                 Tools =
                 [
-                    AIFunctionFactory.Create(SearchTool, name: "bing_web_search",
-                        description: "This tools uses bing to search the web for answers")
+                    AIFunctionFactory.Create(SearchTool, name: "web_search",
+                        description: "This tools searches the web for answers")
                 ],
                 ToolMode = ChatToolMode.Auto
             };
