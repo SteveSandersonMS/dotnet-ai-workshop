@@ -410,3 +410,6 @@ Now if the content our rag found is not enough to support the user question web 
 We don't need to use bing search, we can use this loop to probe better our rag. This is a combinantion of **reasoning** and **query rewriting**. 
 
 Be careful that we still need to ensure we do not perrfom infinite loops.
+
+This is an example asking questions that are using the planner:
+![Image](https://github.com/user-attachments/assets/139dc859-1fd1-467d-a714-520d2c4e2bcd)
