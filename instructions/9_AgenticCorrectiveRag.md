@@ -287,6 +287,10 @@ builder.Services.AddSingleton(b =>
 });
 ```
 
+To use `DuckDuckGoSearchTool` use this code instead:
+```cs
+```
+
 Then modify the `Chatbot.cs` to introduce a dependency on the tool, modify the constructor like this:
 ```cs
 public class Chatbot(
@@ -297,9 +301,25 @@ public class Chatbot(
     : IHostedService
 ```
 
+
+Or this if using `DuckDuckGoSearchTool`:
+```cs
+public class Chatbot(
+    IChatClient chatClient,
+    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
+    QdrantClient qdrantClient,
+    DuckDuckGoSearchTool duckDuckGoSearchTool
+    )
+    : IHostedService
+```
 pass it to the `ChatbotThread` constructor:
 ```cs
 ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
+```
+
+or this :
+```cs
+ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, duckDuckGoSearchTool);
 ```
 
 Now we want to edit the code in `ChatbotThread.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`, you can use the following snippet to setup the options.
@@ -310,19 +330,43 @@ async Task<string> SearchTool([Description("The questions we want to answer sear
     var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
 
     return string.Join("\n", results.Select(c => $"""
-                                                  ## web page: {c.Url}
-                                                  # Content
-                                                  {c.Snippet}
+                                                    ## web page: {c.Url}
+                                                    # Content
+                                                    {c.Snippet}
 
-                                                  """));
+                                                    """));
 }
 
 var options = new ChatOptions
 {
     Tools =
     [
-        AIFunctionFactory.Create(SearchTool, name: "bing_web_search",
-            description: "This tools uses bing to search the web for answers")
+        AIFunctionFactory.Create(SearchTool, name: "web_search",
+            description: "This tools searches the web for answers")
+    ],
+    ToolMode = ChatToolMode.Auto
+};
+```
+
+if using `duckDuckGoSearchTool` the code for tool definition is the following:
+```cs
+async Task<string> SearchTool([Description("The questions we want to answer searching duckduckgo")] string userQuestion)
+{
+    var results = await duckDuckGoSearchTool!.SearchWebAsync(userQuestion, cancellationToken);
+
+    return $"""
+            ## web page: {results.Url}
+            # Content
+            {results.Abstract}
+            """;
+}
+
+var options = new ChatOptions
+{
+    Tools =
+    [
+        AIFunctionFactory.Create(SearchTool, name: "web_search",
+            description: "This tools searches the web for answers")
     ],
     ToolMode = ChatToolMode.Auto
 };
@@ -376,8 +420,8 @@ if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
     {
         Tools =
         [
-            AIFunctionFactory.Create(SearchTool, name: "bing_web_search",
-                description: "This tools uses bing to search the web for answers")
+            AIFunctionFactory.Create(SearchTool, name: "web_search",
+                description: "This tools searches the web for answers")
         ],
         ToolMode = ChatToolMode.Auto
     };
@@ -429,10 +473,12 @@ if (planOrResult.Result is not null)
 }
 ```
 
+Remember to change the code accordingly to sue **Bing** or **DuckDuckGo**.
+
 Uses the correction outcome to add a reference entry, this collection is used to produce the final answer back to the customer including the citation.
 Use the code so far as a starting point to modify the `AnswerAsync` method in `ChatbotThread.cs`.
 Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
-We don't need to use **Bing** search, we can use this loop to probe better our rag. 
+We don't need to use **Bing** or **DuckDuckGo**, we can use this loop to probe better our rag. 
 
 We can use a combination of **reasoning** and **query rewriting** to rephrase the user question to probe in different ways the `Qdrant` vector store too. 
 Be careful that we still need to ensure we do not perform infinite loops.
