@@ -59,19 +59,21 @@ public class ChatbotThread(
         // calculate relevancy
 
         ContextRelevancyEvaluator contextRelevancyEvaluator = new(chatClient);
-
+        double averageScore = 0;
         foreach (var retrievedContext in closestChunksById.Values)
         {
             var score = await contextRelevancyEvaluator.EvaluateAsync(userMessage, retrievedContext.Text, cancellationToken);
             if (score.ContextRelevance!.ScoreNumber > 0.7)
             {
+                averageScore += score.ContextRelevance!.ScoreNumber;
                 chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
             }
         }
 
+        averageScore /= chunksForResponseGeneration.Count;
         // perform corrective retrieval if needed
 
-        if (chunksForResponseGeneration.Count < 2)
+        if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
         {
             var planGenerator = new PlanGenerator(chatClient);
 

@@ -97,16 +97,19 @@ var chunksForResponseGeneration = closestChunksById.Values.ToDictionary(c => c.I
 
 ```cs
 // For improved RAG, add only the truly relevant chunks to context
-var chunksForResponseGeneration = new Dictionary<ulong, Chunk>();
-var contextRelevancyEvaluator = new ContextRelevancyEvaluator(chatClient);
+ContextRelevancyEvaluator contextRelevancyEvaluator = new(chatClient);
+double averageScore = 0;
 foreach (var retrievedContext in closestChunksById.Values)
 {
     var score = await contextRelevancyEvaluator.EvaluateAsync(userMessage, retrievedContext.Text, cancellationToken);
-    if (score.ContextRelevance?.ScoreNumber >= 0.7)
+    if (score.ContextRelevance!.ScoreNumber > 0.7)
     {
+        averageScore += score.ContextRelevance!.ScoreNumber;
         chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
     }
 }
+
+averageScore /= chunksForResponseGeneration.Count;
 ```
 
 ### How it works
@@ -116,8 +119,6 @@ Inside `ContextRelevancyEvaluator.cs` we can see the logic used to ask the LLM t
 ```cs
 public async Task<EvaluationResponse> EvaluateAsync(string question, string context, CancellationToken cancellationToken)
 {
-    bool isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-
     // Assess the quality of the answer
     // Note that in reality, "relevance" should be based on *all* the context we supply to the LLM, not just the citation it selects
     var response = await chatClient.CompleteAsync<EvaluationResponse>($$"""
@@ -142,7 +143,7 @@ public async Task<EvaluationResponse> EvaluateAsync(string question, string cont
     Respond as JSON object of the form {
         "ContextRelevance": { "Justification": string, "ScoreLabel": string },
     }
-    """, useNativeJsonSchema: isOllama, cancellationToken: cancellationToken);
+    """, useNativeJsonSchema: true, cancellationToken: cancellationToken);
 
     if (response.TryGetResult(out var score) && score.Populated)
     {
@@ -321,7 +322,7 @@ var options = new ChatOptions
 
 So the **corrective** loop should now look like this:
 ```cs
-if (chunksForResponseGeneration.Count < 2)
+if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
 {
     var planGenerator = new PlanGenerator(chatClient);
 
