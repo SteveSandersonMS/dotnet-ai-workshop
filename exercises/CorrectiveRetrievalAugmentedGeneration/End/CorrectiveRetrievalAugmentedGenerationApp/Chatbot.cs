@@ -7,13 +7,14 @@ namespace CorrectiveRetrievalAugmentedGenerationApp;
 public class Chatbot(
     IChatClient chatClient,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-    QdrantClient qdrantClient)
+    QdrantClient qdrantClient,
+    BingSearchTool bingSearch)
     : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         Product currentProduct = Helpers.GetCurrentProduct();
-        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct);
+        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
 
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Assistant: Hi! You're looking at the {currentProduct.Model}. What do you want to know about it?");

@@ -10,7 +10,7 @@ namespace CorrectiveRetrievalAugmentedGenerationApp;
 /// <param name="bingSearchApiKey">The API key for accessing the Bing Search API.</param>
 /// <param name="client">The HTTP client used to send requests.</param>
 /// <param name="allowedSiteList">An optional list of allowed sites to restrict the search results.</param>
-internal class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnlyList<string>? allowedSiteList = null)
+public class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnlyList<string>? allowedSiteList = null)
 {
     private const string BingSearchApiUrl = "https://api.bing.microsoft.com/v7.0/search";
 

@@ -272,16 +272,31 @@ The objective here is to find more material and to do so we need some tools. If 
 
 Let's create an instance of the client code, we can put it in the service collection in `Program.cs`:
 ```cs
-builder.Services.AddSingleton<BingSearchTool>(b =>
+builder.Services.AddSingleton(b =>
 {
-    var httpClient = b.GetRequiredService<HttpClient>();
+    var httpClient = new HttpClient();
     return new BingSearchTool(
         builder.Configuration["BingSearch:Key"]!,
         httpClient);
 });
 ```
 
-Now we want to edit the code in `ContextRelevancyEvaluator.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`
+Then modify the `Chatbot.cs` to introduce a dependency on the tool:
+```cs
+public class Chatbot(
+    IChatClient chatClient,
+    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
+    QdrantClient qdrantClient,
+    BingSearchTool bingSearch)
+    : IHostedService
+```
+
+pass it to the `ChatbotThread` constructior:
+```cs
+ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
+```
+
+Now we want to edit the code in `ChatbotThread.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`
 ```cs
 var bingSearchTool = chatClient.GetService<BingSearchTool>();
 
@@ -337,9 +352,8 @@ if (chunksForResponseGeneration.Count < 2)
 
     // pass bing search ai function so that the executor can search web for additional material
 
-    var bingSearchTool = chatClient.GetService<BingSearchTool>();
 
-    Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
+    async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
     {
         var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
 
@@ -349,22 +363,27 @@ if (chunksForResponseGeneration.Count < 2)
                                                         {c.Snippet}
 
                                                         """));
-    };
+    }
 
     var options = new ChatOptions
     {
-        Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
+        Tools =
+        [
+            AIFunctionFactory.Create(SearchTool, name: "bing_web_search",
+                description: "This tools uses bing to search the web for answers")
+        ],
         ToolMode = ChatToolMode.Auto
     };
 
-    var res = await  stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
+    var res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
     pastSteps.Add(res);
 
     var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
 
     while (planOrResult.Plan is not null)
     {
-        res = await stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
+        plan = planOrResult.Plan;
+        res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
         pastSteps.Add(res);
 
         planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
@@ -375,11 +394,11 @@ if (chunksForResponseGeneration.Count < 2)
     if (planOrResult.Result is not null)
     {
         chunksForResponseGeneration[key] = new Chunk(
-        
-            Id : key,
-            Text : planOrResult.Result.Outcome,
-            ProductId : currentProduct.ProductId,
-            PageNumber : 1
+
+            Id: key,
+            Text: planOrResult.Result.Outcome,
+            ProductId: currentProduct.ProductId,
+            PageNumber: 1
         );
     }
 }

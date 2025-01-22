@@ -1,6 +1,9 @@
 ﻿using System.ComponentModel;
+
 using Microsoft.Extensions.AI;
+
 using Planner;
+
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
@@ -10,7 +13,8 @@ public class ChatbotThread(
     IChatClient chatClient,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
-    Product currentProduct)
+    Product currentProduct,
+    BingSearchTool bingSearchTool)
 {
     private readonly List<ChatMessage> _messages =
     [
@@ -41,13 +45,13 @@ public class ChatbotThread(
             vector: userMessageEmbedding.ToArray(),
             filter: Conditions.Match("productId", currentProduct.ProductId),
             limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
-        
+
         Dictionary<ulong, Chunk> closestChunksById = closestChunks.ToDictionary(c => c.Id.Num, c => new Chunk
         (
-            Id : c.Id.Num,
-            Text : c.Payload["text"].StringValue,
-            ProductId : (int)c.Payload["productId"].IntegerValue,
-            PageNumber : (int)c.Payload["pageNumber"].IntegerValue)
+            Id: c.Id.Num,
+            Text: c.Payload["text"].StringValue,
+            ProductId: (int)c.Payload["productId"].IntegerValue,
+            PageNumber: (int)c.Payload["pageNumber"].IntegerValue)
         );
 
         Dictionary<ulong, Chunk> chunksForResponseGeneration = [];
@@ -98,7 +102,6 @@ public class ChatbotThread(
 
             // pass bing search ai function so that the executor can search web for additional material
 
-            var bingSearchTool = chatClient.GetService<BingSearchTool>();
 
             async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
             {
@@ -122,14 +125,15 @@ public class ChatbotThread(
                 ToolMode = ChatToolMode.Auto
             };
 
-            var res = await  stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
+            var res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
             pastSteps.Add(res);
 
             var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
 
             while (planOrResult.Plan is not null)
             {
-                res = await stepExecutor.ExecutePlanStep(plan, options:options, cancellationToken: cancellationToken);
+                plan = planOrResult.Plan;
+                res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
                 pastSteps.Add(res);
 
                 planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
@@ -140,15 +144,15 @@ public class ChatbotThread(
             if (planOrResult.Result is not null)
             {
                 chunksForResponseGeneration[key] = new Chunk(
-                
-                    Id : key,
-                    Text : planOrResult.Result.Outcome,
-                    ProductId : currentProduct.ProductId,
-                    PageNumber : 1
+
+                    Id: key,
+                    Text: planOrResult.Result.Outcome,
+                    ProductId: currentProduct.ProductId,
+                    PageNumber: 1
                 );
             }
         }
-        
+
         // Log the closest manual chunks for debugging (not using ILogger because we want color)
         //Console.WriteLine("Retrieved chunks via rag");
         //foreach (var chunk in closestChunks)
@@ -192,8 +196,8 @@ public class ChatbotThread(
         if (response.TryGetResult(out ChatBotAnswer? answer))
         {
             // If the chatbot gave a citation, convert it to info to show in the UI
-            Citation? citation = answer.ManualExtractId.HasValue && chunksForResponseGeneration.TryGetValue((ulong)answer.ManualExtractId, out var chunk) 
-                ? new Citation(chunk.ProductId,chunk.PageNumber, answer.ManualQuote ?? "")
+            Citation? citation = answer.ManualExtractId.HasValue && chunksForResponseGeneration.TryGetValue((ulong)answer.ManualExtractId, out var chunk)
+                ? new Citation(chunk.ProductId, chunk.PageNumber, answer.ManualQuote ?? "")
                 : null;
 
             return (answer.AnswerText, citation, chunksForResponseGeneration.Values.Select(v => v.Text).ToArray());
