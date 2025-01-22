@@ -390,7 +390,8 @@ if (chunksForResponseGeneration.Count < 2)
     }
 
     // we add a fake entry to the chunks by id so that we can add the answer to the context
-    ulong key = chunksForResponseGeneration.Keys.Max() + 1;
+    ulong maxKey = chunksForResponseGeneration.Count == 0 ? 0 : chunksForResponseGeneration.Keys.Max();
+    ulong key = maxKey + 1;
     if (planOrResult.Result is not null)
     {
         chunksForResponseGeneration[key] = new Chunk(
