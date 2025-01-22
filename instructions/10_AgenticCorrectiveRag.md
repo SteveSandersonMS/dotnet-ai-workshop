@@ -409,7 +409,7 @@ if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
     }
 }
 ```
-The code is now triggering if the `chunksForResponseGeneration` is not of sufficient quality. The corrective retrieval is triggered and executed until an `Outcome` is available.
+The code is now triggering if the `chunksForResponseGeneration` is not of sufficient quality. The corrective retrieval is triggered and executed until an `Outcome` is available. Put this code in the `AnswerAsync` after the **re-ranking** section.
 The code block:
 ```cs
 // we add a fake entry to the chunks by id so that we can add the answer to the context
