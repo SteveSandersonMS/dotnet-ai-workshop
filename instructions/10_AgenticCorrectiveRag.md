@@ -112,9 +112,9 @@ foreach (var retrievedContext in closestChunksById.Values)
 averageScore /= chunksForResponseGeneration.Count;
 ```
 
-You can use this code to filter the retrieved manual chunks to keep only the most relevant to the question. Also we track the overal relevancy of the final set.
+You can use this code to filter the retrieved manual chunks to keep only the most relevant to the question and keeping track the overal relevancy of the final set.
 
-### How it works
+### How re-ranking works
 
 Inside `ContextRelevancyEvaluator.cs` we can see the logic used to ask the LLM to perform ranking:
 
@@ -326,7 +326,7 @@ var options = new ChatOptions
 };
 ```
 
-So the **corrective** loop could now look like this:
+You can write the  **corrective** loop like this:
 ```cs
 if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
 {
