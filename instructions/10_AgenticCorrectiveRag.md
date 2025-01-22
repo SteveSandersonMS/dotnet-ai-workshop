@@ -112,6 +112,8 @@ foreach (var retrievedContext in closestChunksById.Values)
 averageScore /= chunksForResponseGeneration.Count;
 ```
 
+You can use this code to filter the retrieved manual chunks to keep only the most relevant to the question. Also we track the overal relevancy of the final set.
+
 ### How it works
 
 Inside `ContextRelevancyEvaluator.cs` we can see the logic used to ask the LLM to perform ranking:
@@ -157,7 +159,10 @@ Returning a structured object instead of a string makes it easier to integrate a
 
 ### Correcting the aim
 
-Now that we have discarded irrelevant context we might need additional material. This is the corrective part of the algorthm. There are few approaches possible
+Now that we have discarded irrelevant context we might need additional material. This is the corrective part of the algorthm. 
+We might end with a `chunksForResponseGeneration` collection that does not contain enough (or at all) material, we need to find ways to improve it by adding more content there.
+
+There are few approaches possible, some of the most common are:
 
 1. **Query rewriting**
   
@@ -189,26 +194,24 @@ LLMs can generate plans to accomplish a goal giving us back a list of steps. If 
 Since we will be using the `Planner` project this is how to use teh structured parser.
 
 In the following snippet we are using it to create a plan (see the implementation of the `PlanGenerator` class)
-// create a structures predictro from an instance of IChatClient
+
 ```csharp
-
+// create a structured predictor
 IStructuredPredictor structuredPredictor = chatClient.ToStructuredPredictor([typeof(Plan)]);
-// user it to obtain a plan
 
+// user it to obtain a plan
 StructuredPredictionResult result = await structuredPredictor.PredictAsync([new ChatMessage(ChatRole.User, "create a plan to go to the moon")]);
 if (result.Value is not Plan plan)
 {
     throw new InvalidOperationException("No plan generated");
 }
-...
 ```
 
-We can provide a lsit of types when creating a `IStructuredPredictor`, this will accomplish the same as passing a discriminated union.
+We can provide a list of types when creating a `IStructuredPredictor`, this will accomplish the same as passing a discriminated union.
 The objective is to force the choice of one of the tyep provided.
-
 This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorythm.
 
-You can now create a loop like this:
+For example we can now write a loop that tries to look for more data to answer the user question. The code would look something like this:
 ```cs
 var planGenerator = new PlanGenerator(chatClient);
 
@@ -249,14 +252,14 @@ while (planOrResult.Plan is not null)
 
     planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
 }
+
+var answer = planOrResult.Result?.Outcome ?? "Sorry could not answer your question";
 ```
 
-This code block implements the loop we drscribed at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, That will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count ans the plan unfolds). 
-
+This code block implements the loop we drscribed at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, that will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. 
+The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count ans the plan unfolds). 
 Since we are using a structured parsing approach (have a look at projects like [TypeChat](https://github.com/microsoft/typechat.net)) to see the power and control that this techniques gives compared to parsing.
-
 This is a good way to combine stocastic behaviours of LLMs (Machine learning in general) and deterministc behaviour of algorythms and data structures.
-
 The objective here is to find more material and to do so we need some tools. If you want to use the bing search tool you will need your own BingAPI keys. Make sure to add it to the user secrets, they should look like this
 ```js
 {
@@ -282,7 +285,7 @@ builder.Services.AddSingleton(b =>
 });
 ```
 
-Then modify the `Chatbot.cs` to introduce a dependency on the tool:
+Then modify the `Chatbot.cs` to introduce a dependency on the tool, modify the constructor like this:
 ```cs
 public class Chatbot(
     IChatClient chatClient,
@@ -297,11 +300,10 @@ pass it to the `ChatbotThread` constructior:
 ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
 ```
 
-Now we want to edit the code in `ChatbotThread.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`
+Now we want to edit the code in `ChatbotThread.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`, you can use the following snippet to setup the options.
+This code snippet gives us a tool that the `PlanExecutor` can access and invoke for searching the web for additional content.
 ```cs
-var bingSearchTool = chatClient.GetService<BingSearchTool>();
-
-Func<string, Task<string>> searchTool = async ([Description("The questions we want to answer searching bing")] userQuestion) =>
+async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
 {
     var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
 
@@ -311,16 +313,20 @@ Func<string, Task<string>> searchTool = async ([Description("The questions we wa
                                                   {c.Snippet}
 
                                                   """));
-};
+}
 
 var options = new ChatOptions
 {
-    Tools = [AIFunctionFactory.Create(searchTool, name: "bing_web_search", description: "This tools uses bing to search the web for answers")],
+    Tools =
+    [
+        AIFunctionFactory.Create(SearchTool, name: "bing_web_search",
+            description: "This tools uses bing to search the web for answers")
+    ],
     ToolMode = ChatToolMode.Auto
 };
 ```
 
-So the **corrective** loop should now look like this:
+So the **corrective** loop could now look like this:
 ```cs
 if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
 {
@@ -352,8 +358,6 @@ if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
     List<PanStepExecutionResult> pastSteps = [];
 
     // pass bing search ai function so that the executor can search web for additional material
-
-
     async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
     {
         var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
@@ -406,10 +410,11 @@ if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
 }
 ```
 
+You can use the code so far as a starting point to modify the `AnswerAsync` method in `ChatbotThread.cs`.
 Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
+We don't need to use bing search, we can use this loop to probe better our rag. 
 
-We don't need to use bing search, we can use this loop to probe better our rag. This is a combinantion of **reasoning** and **query rewriting**. 
-
+We can use a combination of **reasoning** and **query rewriting** to rephrase the user question to probe in different ways the `Qdrant` vector store too. 
 Be careful that we still need to ensure we do not perrfom infinite loops.
 
 This is an example asking questions that are using the planner:
