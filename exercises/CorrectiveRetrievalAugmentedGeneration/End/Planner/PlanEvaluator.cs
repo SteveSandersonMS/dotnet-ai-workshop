@@ -37,6 +37,7 @@ public class PlanEvaluator(IChatClient chatClient)
                  </past_steps>
 
                  Update your <original_plan> accordingly. If no more steps are needed to satisfy <objective> with the <past_steps> and you can return to the user, then respond with that as PlanResult. Otherwise, fill out the plan. Only add steps to the plan that still NEED to be done. Do not return previously done steps as part of the plan. If the past steps contains the final answer, then return that as the result, adding steps like 'report the result' is not appropriate and will fail the plan.
+                 If the steps keep repeating it means you cannot generate the plan, in that case return a PlanResult using the <past_steps> and make sure to clarify that this is all. Do not keep extending the plan with too many examples or other descriptive tasks, focus on achieving the objective with the minimum amount of steps.
                  """)
         ];
 
