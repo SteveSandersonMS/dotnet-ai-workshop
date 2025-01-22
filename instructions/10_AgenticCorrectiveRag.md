@@ -211,7 +211,7 @@ We can provide a list of types when creating a `IStructuredPredictor`, this will
 The objective is to force the choice of one of the tyep provided.
 This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorythm.
 
-For example we can now write a loop that tries to look for more data to answer the user question. The code would look something like this:
+For example we can now write a loop that tries to look for more data to answer the user question like this:
 ```cs
 var planGenerator = new PlanGenerator(chatClient);
 
@@ -326,7 +326,7 @@ var options = new ChatOptions
 };
 ```
 
-You can write the  **corrective** loop like this:
+You can write the **corrective** loop like this:
 ```cs
 if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
 {
@@ -409,8 +409,26 @@ if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
     }
 }
 ```
+The code is now triggering if the `chunksForResponseGeneration` is not of sufficient quality. The corrective retrieval is triggered and executed until an `Outcome` is available.
+The code block:
+```cs
+// we add a fake entry to the chunks by id so that we can add the answer to the context
+ulong maxKey = chunksForResponseGeneration.Count == 0 ? 0 : chunksForResponseGeneration.Keys.Max();
+ulong key = maxKey + 1;
+if (planOrResult.Result is not null)
+{
+    chunksForResponseGeneration[key] = new Chunk(
 
-You can use the code so far as a starting point to modify the `AnswerAsync` method in `ChatbotThread.cs`.
+        Id: key,
+        Text: planOrResult.Result.Outcome,
+        ProductId: currentProduct.ProductId,
+        PageNumber: 1
+    );
+}
+```
+
+Uses the correction outcome to add a reference entry, this collection is used to produce the final answer back to the customer including the citation.
+Use the code so far as a starting point to modify the `AnswerAsync` method in `ChatbotThread.cs`.
 Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
 We don't need to use bing search, we can use this loop to probe better our rag. 
 
