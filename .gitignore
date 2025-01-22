@@ -14,3 +14,5 @@ exercises/**/.NCrunch_PlanAndExecute/
 exercises/**/nCrunchTemp_*.csproj
 
 exercises/**/.NCrunch_CorrectiveRetrievalAugmentedGeneration/
+
+.vscode/
