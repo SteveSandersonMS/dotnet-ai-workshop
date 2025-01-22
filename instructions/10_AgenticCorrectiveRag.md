@@ -31,7 +31,9 @@ If you're not already running Qdrant, start it in Docker now:
 ```
 docker run -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage:z -d qdrant/qdrant
 ```
-Check it is working by opening the [dashboard](http://localhost:6333/dashboard)
+Check it is working by opening the [dashboard](http://localhost:6333/dashboard), it should show the collection and the points.
+
+![Image](https://github.com/user-attachments/assets/e4274975-b3f5-41aa-b76e-c62e52b2a24f)
 
 ### Populating Qdrant
 
