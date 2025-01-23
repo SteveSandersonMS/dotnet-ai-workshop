@@ -31,7 +31,7 @@ public class PlanGeneratorTests
             .AsChatClient("gpt-4o-mini");
         PlanGenerator planGenerator = new(chatClient);
 
-        Plan plan = await planGenerator.GeneratePlanSync("find how much fuel a spaceship needs to reach the moon from earth");
+        Plan plan = await planGenerator.GeneratePlanAsync("find how much fuel a spaceship needs to reach the moon from earth");
 
         plan.Steps.Length.Should().BeGreaterThanOrEqualTo(1);
     }

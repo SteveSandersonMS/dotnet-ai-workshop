@@ -20,9 +20,7 @@ A classic approach here is to try to use in-house data, often a vector search as
 
 In this exercise you will build on top of the earlier [RAG chatbot and tool calling example](./6_RAGChatbot.md) to implement a CRAG system.
 
-If you want to use **Bing** search tool you will need to provision keys, follow the instructions [here](https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/create-bing-search-service-resource).
-
-As an alternative you can use the class `DuckDuckGoSearchTool` in `DuckDuckGoSearchTool.cs`
+If you want to use the Bing search tool you will need to provision a Bing Search Service API key in Azure by following [these instructions](https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/create-bing-search-service-resource). As a simpler (but more limited) alternative you can use the class `DuckDuckGoSearchTool` provided in `DuckDuckGoSearchTool.cs` without any API key.
 
 ## Project setup
 
@@ -33,7 +31,7 @@ If you're not already running Qdrant, start it in Docker now:
 ```
 docker run -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage:z -d qdrant/qdrant
 ```
-Check it is working by opening the [dashboard](http://localhost:6333/dashboard), it should show the collection and the points.
+Check it is working by opening the [dashboard](http://localhost:6333/dashboard). It should contain a collection called `manuals`. If you want, you can visualize the points:
 
 ![Image](https://github.com/user-attachments/assets/e4274975-b3f5-41aa-b76e-c62e52b2a24f)
 
@@ -74,7 +72,7 @@ Switch over to work on the CRAG project:
 
 In `Program.cs`, you'll see there's quite a lot of setup code. But none of this is a chatbot at all. It's just setting up an `IChatClient`, and `IEmbeddingGenerator`, and a `QdrantClient`.
 
-Find where `IChatClient innerChatClient` is declared and make sure it's using the Azure OpenAI backend as we will require to perform structured parsing.
+Find where `IChatClient innerChatClient` is declared and make sure it's using the Azure OpenAI backend as we will require to perform structured parsing. While it's technically possible to achieve this with smaller models on Ollama, you would encounter reliability issues that would distract from the understanding of CRAG that this section aims to focus on.
 
 ### Ranking and filtering RAG results 
 
@@ -99,12 +97,13 @@ var chunksForResponseGeneration = closestChunksById.Values.ToDictionary(c => c.I
 
 ```cs
 // For improved RAG, add only the truly relevant chunks to context
+var chunksForResponseGeneration = new Dictionary<ulong, Chunk>();
 ContextRelevancyEvaluator contextRelevancyEvaluator = new(chatClient);
 double averageScore = 0;
 foreach (var retrievedContext in closestChunksById.Values)
 {
     var score = await contextRelevancyEvaluator.EvaluateAsync(userMessage, retrievedContext.Text, cancellationToken);
-    if (score.ContextRelevance!.ScoreNumber > 0.7)
+    if (score.ContextRelevance!.ScoreNumber >= 0.7)
     {
         averageScore += score.ContextRelevance!.ScoreNumber;
         chunksForResponseGeneration.Add(retrievedContext.Id, retrievedContext);
@@ -114,7 +113,7 @@ foreach (var retrievedContext in closestChunksById.Values)
 averageScore /= chunksForResponseGeneration.Count;
 ```
 
-You can use this code to filter the retrieved manual chunks to keep only the most relevant to the question and keeping track the overall relevancy of the final set.
+You can use this code to filter the retrieved manual chunks to keep only those most relevant to the question, and to keep track of the overall relevancy of the final set.
 
 ### How re-ranking works
 
@@ -135,19 +134,19 @@ public async Task<EvaluationResponse> EvaluateAsync(string question, string cont
     You are to provide two scores:
 
     1. Score the relevance of <context> to <question>.
-       Does <context> contain information that may answer <question>?
+        Does <context> contain information that may answer <question>?
 
 
     Each score comes with a short justification, and must be one of the following labels:
-     * Awful: it's completely unrelated to the target or contradicts it
-     * Poor: it misses essential information from the target
-     * Good: it includes the main information from the target, but misses smaller details
-     * Perfect: it includes all important information from the target and does not contradict it
+        * Awful: it's completely unrelated to the target or contradicts it
+        * Poor: it misses essential information from the target
+        * Good: it includes the main information from the target, but misses smaller details
+        * Perfect: it includes all important information from the target and does not contradict it
 
     Respond as JSON object of the form {
         "ContextRelevance": { "Justification": string, "ScoreLabel": string },
     }
-    """, useNativeJsonSchema: true, cancellationToken: cancellationToken);
+    """, cancellationToken: cancellationToken);
 
     if (response.TryGetResult(out var score) && score.Populated)
     {
@@ -157,14 +156,14 @@ public async Task<EvaluationResponse> EvaluateAsync(string question, string cont
     throw new InvalidOperationException("Invalid response from the AI assistant");
 }
 ```
-Returning a structured object instead of a string makes it easier to integrate an LLM in traditional code.
+Returning a structured object instead of a string makes it easier to integrate an LLM into traditional code.
 
 ### Correcting the aim
 
-Now that we have discarded irrelevant context we might need additional material. This is the corrective part of the algorithm. 
-We might end with a `chunksForResponseGeneration` collection that does not contain enough (or at all) material, we need to find ways to improve it by adding more content there.
+Now that we have discarded irrelevant context, we might need additional material. This is the corrective part of the algorithm. 
+We might end with a `chunksForResponseGeneration` collection that does not contain enough (or any) material, so we need to find ways to improve it by adding more content.
 
-There are few approaches possible, some of the most common are:
+There are few approaches possible. Some of the most common are:
 
 1. **Query rewriting**
   
@@ -178,13 +177,12 @@ There are few approaches possible, some of the most common are:
 
 *Query rewriting* and *HyDE* are closely related in that they both aim to improve retrieval by allowing for alternate ways to phrase things. A difference between the two is that query rewriting computes those alternatives at runtime during each query, whereas HyDE computes the alternatives just once up front.
 
-### Reasoning in agentic workflow
+### Reasoning in an agentic workflow
 
-Agentic approach to *RAG* takes a different way.
-Agents implement a loop, when reasoning they use the context and the objective to formulate a plan. In the loop they perform some action which can change the current context.
-Changes to the context could lead to plan changes or the final goal. 
+An agentic approach to *RAG* takes a different approach. An agent takes the initial context and objective and formulates a plan. Then, it executes a loop. On each iteration of the loop, the agent performs some action which can change the current context, which in turn may also change the current plan. The loop exits when the final objective is reached.
 
-Worth mentioning [ReAct](https://docs.llamaindex.ai/en/stable/examples/agent/react_agent_with_query_engine/) and [Flare](https://docs.llamaindex.ai/en/stable/examples/query_engine/flare_query_engine/) retrieval approaches. They make a single step of retrieval and try to explore the problem space a step at a time, reasoning on the knowledge gaps to fill and how to search the information to address such gaps. They use a limited amount of tokens because as they loop they mutate the current state without an overall vision. This get get into infinite loops as the agent doesn't know what has been already explored, is just focused on accomplishing the final goal.
+> [!ASIDE]
+> If you want to learn more, read up on the [ReAct](https://docs.llamaindex.ai/en/stable/examples/agent/react_agent_with_query_engine/) and [Flare](https://docs.llamaindex.ai/en/stable/examples/query_engine/flare_query_engine/) retrieval approaches. These perform a single step of retrieval and try to explore the problem space one step at a time, reasoning about knowledge gaps that remain and how to retrieve more information to address such gaps. They have the benefit of using a limited number of tokens because as they loop, they mutate the current state without an overall vision. But as a drawback this risks getting into infinite loops because the agent doesn't know what has been already explored, is only focused on accomplishing the final goal.
 
 We will be using a **Plan, Step, Eval** approach, so we can keep looking at the overall trajectory and what we have accomplished so far.
 
@@ -192,296 +190,154 @@ First let's break down few things we need to consider and use.
 
 #### Making plans
 
-LLMs can generate plans to accomplish a goal giving us back a list of steps. If we use text in and text out the agentic loop becomes very weak as it will be as strong as the parsing logic will be. To improve our work we will be forcing the LLM itself to reason in terms of structured objects. In the project `StructuredPrediction` You will find some utilities to create a `IStructuredPredictor` from a `IChatClient`, have a look at the tests for the project.
-Since we will be using the `Planner` project this is how to use the structured parser.
+LLMs can generate plans to accomplish a goal, giving us back a list of steps. A plan is structured information, so we want to represent it with strongly-typed C# objects. Each step might be represented as a different type of object (e.g., search a vector DB, search the web, run some code, etc.).
 
-In the following snippet we are using it to create a plan (see the implementation of the `PlanGenerator` class)
+To assist with this, the example app includes a project called `StructuredPrediction` containing utilities to create an `IStructuredPredictor` from a `IChatClient`. This extends `CompleteAsync<T>` by being able to return multile different types instead of just one single type `T`.
 
-```csharp
-// create a structured predictor
-IStructuredPredictor structuredPredictor = chatClient.ToStructuredPredictor([typeof(Plan)]);
+#### Registering a search tool in DI
 
-// user it to obtain a plan
-StructuredPredictionResult result = await structuredPredictor.PredictAsync([new ChatMessage(ChatRole.User, "create a plan to go to the moon")]);
-if (result.Value is not Plan plan)
-{
-    throw new InvalidOperationException("No plan generated");
-}
+We'll give the agent the ability to fill in knowledge gaps by searching the web.
+
+If you want to use the Bing Search API, first obtain an API key following the [these instructions](https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/create-bing-search-service-resource). It's free but does require a credit card to sign up. You can then add it to user secrets by running a command like the following in the directory containing `CorrectiveRetrievalAugmentedGenerationApp.csproj`:
+
+```
+dotnet user-secrets set BingSearch:Key yourKeyGoesHere
 ```
 
-We can provide a list of types when creating a `IStructuredPredictor`, this will accomplish the same as passing a discriminated union.
-The objective is to force the choice of one of the type provided.
-This makes it easier to write our **plan-execute-eval** loop as a plain and clear csharp algorithm.
+Finally, you can register the Bing search tool as a DI service in `Program.cs`:
 
-For example we can now write a loop that tries to look for more data to answer the user question like this:
 ```cs
-var planGenerator = new PlanGenerator(chatClient);
-
-var toolCallingClient = new FunctionInvokingChatClient(chatClient);
-var stepExecutor = new PlanExecutor(toolCallingClient);
-
-var evaluator = new PlanEvaluator(chatClient);
-
-string task = $"""
-                Given the <user_question>, search the product manuals for relevant information.
-                Look for information that may answer the question, and provide a response based on that information.
-                The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
-
-                <user_question>
-                {userMessage}
-                </user_question>
-
-                <context>
-                {string.Join("\n", closestChunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
-                </context>
-                """;
-
-var plan = await planGenerator.GeneratePlanSync(
-    task
-    , cancellationToken);
-
-List<PanStepExecutionResult> pastSteps = [];
-
-var res = await  stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
-pastSteps.Add(res);
-
-var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
-
-while (planOrResult.Plan is not null)
-{
-    res = await stepExecutor.ExecutePlanStep(plan, cancellationToken: cancellationToken);
-    pastSteps.Add(res);
-
-    planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
-}
-
-var answer = planOrResult.Result?.Outcome ?? "Sorry could not answer your question";
+builder.Services.AddSingleton<ISearchTool>(_ =>
+    new BingSearchTool(builder.Configuration["BingSearch:Key"]!, new HttpClient()));
 ```
 
-This code block implements the loop we described at the beginning of this document. Every time only the first step of the plan is executed. With the outcome we ask the evaluator to perform a choice. If the task is done it will produce a non null `planOrResult.Result.Outcome`, that will contain the final answer. If more work is needed a new plan will be calculated taking into account all previous steps done and their results. 
-The collection `pastSteps` is here to reduce the risk of infinite loop (at the cost of bigger token count as the plan unfolds). 
-Since we are using a structured parsing approach (have a look at projects like [TypeChat](https://github.com/microsoft/typechat.net)) to see the power and control that this techniques gives compared to parsing.
-This is a good way to combine stochastic behaviours of LLMs (Machine learning in general) and deterministic behaviour of algorithms and data structures.
-The objective here is to find more material and to do so we need some tools. If you want to use the **Bing** search tool you will need your own BingAPI keys. Make sure to add it to the user secrets, they should look like this
-```js
-{
-  "AzureOpenAI": {
-    "Endpoint": "",
-    "Key": ""
-  },
-  "BingSearch": {
-    "Key": ""
-  }
-}
-```
+As an alternative to the Bing Search API, you can use the provided `DuckDuckGoSearchTool` by registering a DI service in `Program.cs` as follows:
 
-
-Let's create an instance of the client code, we can put it in the service collection in `Program.cs`:
 ```cs
-builder.Services.AddSingleton(b =>
-{
-    var httpClient = new HttpClient();
-    return new BingSearchTool(
-        builder.Configuration["BingSearch:Key"]!,
-        httpClient);
-});
+builder.Services.AddSingleton<ISearchTool>(_ => new DuckDuckGoSearchTool(new HttpClient()));
 ```
 
-To use `DuckDuckGoSearchTool` use this code instead:
-```cs
-```
+This avoids the need for a Bing Search API key, but is much more limited. DuckDuckGo's API only returns results for simple queries, e.g., ones that match the name of a Wikipedia page.
 
-Then modify the `Chatbot.cs` to introduce a dependency on the tool, modify the constructor like this:
+#### Giving the chatbot access to the search tool
+
+Update `Chatbot.cs` to introduce a dependency on the search tool. Modify its constructor like this:
+
 ```cs
 public class Chatbot(
     IChatClient chatClient,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
-    BingSearchTool bingSearch)
+    ISearchTool searchTool)
     : IHostedService
 ```
 
+In turn, pass this through to the `ChatbotThread` constructor:
 
-Or this if using `DuckDuckGoSearchTool`:
 ```cs
-public class Chatbot(
+ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, searchTool);
+```
+
+... and correspondingly update the `ChatbotThread` constructor to receive it:
+
+```cs
+public class ChatbotThread(
     IChatClient chatClient,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
-    DuckDuckGoSearchTool duckDuckGoSearchTool
-    )
-    : IHostedService
-```
-pass it to the `ChatbotThread` constructor:
-```cs
-ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearch);
+    Product currentProduct,
+    ISearchTool searchTool)
 ```
 
-or this :
-```cs
-ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, duckDuckGoSearchTool);
-```
+Now we want to define a C# method that can be called by the LLM to perform a search. In `ChatbotThread`, add a further method:
 
-Now we want to edit the code in `ChatbotThread.cs` for the `AnswerAsync` so we can create the tool and the `ChatOptions`, you can use the following snippet to setup the options.
-This code snippet gives us a tool that the `PlanExecutor` can access and invoke for searching the web for additional content.
 ```cs
-async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
+private async Task<string> SearchWeb(
+    [Description("The question we want to answer using a web search")] string userQuestion,
+    CancellationToken cancellationToken = default)
 {
-    var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
-
+    var results = await searchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
     return string.Join("\n", results.Select(c => $"""
-                                                    ## web page: {c.Url}
-                                                    # Content
-                                                    {c.Snippet}
-
-                                                    """));
+        ## web page: {c.Url}
+        # Content
+        {c.Snippet}
+        """));
 }
-
-var options = new ChatOptions
-{
-    Tools =
-    [
-        AIFunctionFactory.Create(SearchTool, name: "web_search",
-            description: "This tools searches the web for answers")
-    ],
-    ToolMode = ChatToolMode.Auto
-};
 ```
 
-if using `duckDuckGoSearchTool` the code for tool definition is the following:
-```cs
-async Task<string> SearchTool([Description("The questions we want to answer searching duckduckgo")] string userQuestion)
-{
-    var results = await duckDuckGoSearchTool!.SearchWebAsync(userQuestion, cancellationToken);
+#### Implementing the Corrective RAG loop
 
-    return $"""
-            ## web page: {results.Url}
-            # Content
-            {results.Abstract}
-            """;
-}
+Finally we're ready to put in the logic that implements a corrective RAG loop. Inside `ChatbotThread`'s `AnswerAsync`, find the following comment:
 
-var options = new ChatOptions
-{
-    Tools =
-    [
-        AIFunctionFactory.Create(SearchTool, name: "web_search",
-            description: "This tools searches the web for answers")
-    ],
-    ToolMode = ChatToolMode.Auto
-};
+```
+// Now ask the chatbot
 ```
 
-You can write the **corrective** loop like this:
+Immediately **before** that comment, add the following block of code. It's a big one, and implements everything we discussed above:
+
 ```cs
+// Corrective RAG
 if (chunksForResponseGeneration.Count < 2 || averageScore < 0.7)
 {
     var planGenerator = new PlanGenerator(chatClient);
-
     var toolCallingClient = new FunctionInvokingChatClient(chatClient);
     var stepExecutor = new PlanExecutor(toolCallingClient);
 
     var evaluator = new PlanEvaluator(chatClient);
 
     string task = $"""
-                    Given the <user_question>, search the product manuals for relevant information.
-                    Look for information that may answer the question, and provide a response based on that information.
-                    The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
+            Given the <user_question>, search the product manuals for relevant information.
+            Look for information that may answer the question, and provide a response based on that information.
+            The <context> was not enough to answer the question. Find the information that can complement the context to address the user question
 
-                    <user_question>
-                    {userMessage}
-                    </user_question>
+            <user_question>
+            {userMessage}
+            </user_question>
 
-                    <context>
-                    {string.Join("\n", closestChunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
-                    </context>
-                    """;
+            <context>
+            {string.Join("\n", closestChunksById.Values.Select(c => $"<manual_extract id='{c.Id}'>{c.Text}</manual_extract>"))}
+            </context>
+            """;
 
-    var plan = await planGenerator.GeneratePlanSync(
-        task
-        , cancellationToken);
+    List<PlanStepExecutionResult> pastSteps = [];
+    var plan = await planGenerator.GeneratePlanAsync(task, cancellationToken);
+    var options = new ChatOptions { Tools = [AIFunctionFactory.Create(SearchWeb)] };
 
-    List<PanStepExecutionResult> pastSteps = [];
-
-    // pass bing search ai function so that the executor can search web for additional material
-    async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
+    while (true)
     {
-        var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
-
-        return string.Join("\n", results.Select(c => $"""
-                                                        ## web page: {c.Url}
-                                                        # Content
-                                                        {c.Snippet}
-
-                                                        """));
-    }
-
-    var options = new ChatOptions
-    {
-        Tools =
-        [
-            AIFunctionFactory.Create(SearchTool, name: "web_search",
-                description: "This tools searches the web for answers")
-        ],
-        ToolMode = ChatToolMode.Auto
-    };
-
-    var res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
-    pastSteps.Add(res);
-
-    var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
-
-    while (planOrResult.Plan is not null)
-    {
-        plan = planOrResult.Plan;
-        res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
+        var res = await stepExecutor.ExecutePlanStep(plan, options: options, cancellationToken: cancellationToken);
         pastSteps.Add(res);
 
-        planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
-    }
+        var planOrResult = await evaluator.EvaluatePlanAsync(task, plan, pastSteps, cancellationToken);
+        if (planOrResult.Plan is not null)
+        {
+            plan = planOrResult.Plan;
+        }
+        else
+        {
+            // Add the result to context
+            if (planOrResult.Result is { } result)
+            {
+                var fakeId = chunksForResponseGeneration.Keys.Max() + 1;
+                chunksForResponseGeneration[fakeId] = new Chunk(
+                    Id: fakeId,
+                    Text: result.Outcome,
+                    ProductId: currentProduct.ProductId,
+                    PageNumber: 1
+                );
+            }
 
-    // we add a fake entry to the chunks by id so that we can add the answer to the context
-    ulong maxKey = chunksForResponseGeneration.Count == 0 ? 0 : chunksForResponseGeneration.Keys.Max();
-    ulong key = maxKey + 1;
-    if (planOrResult.Result is not null)
-    {
-        chunksForResponseGeneration[key] = new Chunk(
-
-            Id: key,
-            Text: planOrResult.Result.Outcome,
-            ProductId: currentProduct.ProductId,
-            PageNumber: 1
-        );
+            break;
+        }
     }
 }
 ```
-The code is now triggering if the `chunksForResponseGeneration` is not of sufficient quality. The corrective retrieval is triggered and executed until an `Outcome` is available. Put this code in the `AnswerAsync` after the **re-ranking** section.
-The code block:
-```cs
-// we add a fake entry to the chunks by id so that we can add the answer to the context
-ulong maxKey = chunksForResponseGeneration.Count == 0 ? 0 : chunksForResponseGeneration.Keys.Max();
-ulong key = maxKey + 1;
-if (planOrResult.Result is not null)
-{
-    chunksForResponseGeneration[key] = new Chunk(
 
-        Id: key,
-        Text: planOrResult.Result.Outcome,
-        ProductId: currentProduct.ProductId,
-        PageNumber: 1
-    );
-}
-```
+So, what does this do?
 
-Remember to change the code accordingly to sue **Bing** or **DuckDuckGo**.
+It checks whether the vector search results were sufficient to resolve the query directly. If not, it begins a CRAG loop in which an agent is instructed to formulate a plan to handle the query. On each loop, the agent is allowed to perform a web search and/or update its plan. The loop continues until a final `planOrResult.Result` is available. This final result is added to the context, and then the LLM continues by returning a final response to the user (including a possible citation).
 
-Uses the correction outcome to add a reference entry, this collection is used to produce the final answer back to the customer including the citation.
-Use the code so far as a starting point to modify the `AnswerAsync` method in `ChatbotThread.cs`.
-Now if the content our rag found is not enough to support the user question web searches will be used to supplement the set.
-We don't need to use **Bing** or **DuckDuckGo**, we can use this loop to probe better our rag. 
+We can use a combination of **reasoning** and **query rewriting** to rephrase the user question to probe in vector store in different ways too. Be careful that we still need to ensure we do not perform infinite loops.
 
-We can use a combination of **reasoning** and **query rewriting** to rephrase the user question to probe in different ways the `Qdrant` vector store too. 
-Be careful that we still need to ensure we do not perform infinite loops.
-
-This is an example asking questions that are using the planner:
+This is an example of asking a question using the planner:
 ![Image](https://github.com/user-attachments/assets/139dc859-1fd1-467d-a714-520d2c4e2bcd)

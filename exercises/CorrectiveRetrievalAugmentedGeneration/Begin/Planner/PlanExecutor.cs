@@ -4,7 +4,7 @@ namespace Planner;
 
 public class PlanExecutor(IChatClient chatClient)
 {
-    public async Task<PanStepExecutionResult> ExecutePlanStep(Plan plan, ChatOptions? options = null,
+    public async Task<PlanStepExecutionResult> ExecutePlanStep(Plan plan, ChatOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         string planString = string.Join("\n", plan.Steps.Select((step,i) => $"{i+1}. {step.Action}"));
@@ -17,6 +17,6 @@ public class PlanExecutor(IChatClient chatClient)
                          """;
         ChatCompletion response = await chatClient.CompleteAsync([new ChatMessage(ChatRole.User, prompt)], options, cancellationToken: cancellationToken);
         string? output = response.Message.Text;
-        return new PanStepExecutionResult(task.Action, Output:output??string.Empty);
+        return new PlanStepExecutionResult(task.Action, Output:output??string.Empty);
     }
 }
