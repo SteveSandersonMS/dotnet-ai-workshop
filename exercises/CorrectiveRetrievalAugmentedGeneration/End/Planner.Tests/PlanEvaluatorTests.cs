@@ -1,8 +1,5 @@
 ﻿using System.ClientModel;
-using System.Collections.Specialized;
-using System.Text.Json;
 using Azure.AI.OpenAI;
-
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.Extensions.AI;
@@ -40,7 +37,7 @@ public class PlanEvaluatorTests
 
         string task = "find how much fuel a spaceship needs to reach the moon from earth";
 
-        List<PanStepExecutionResult> previousSteps = [
+        List<PlanStepExecutionResult> previousSteps = [
             new ("find distance from earth to the moon", "The distance from earth to the moon is 384,400 km"),
             new ("find out ship fuel consumptions", "The spaceship needs 1 gallons of fuel per 1000km"),
             new("calculate necessary fuel for spaceship to cover distance between earth and the moon", "The ship will consume 384.4 gallons to cover the distance between the earth and the moon")
@@ -74,7 +71,7 @@ public class PlanEvaluatorTests
 
         string task = "find how much fuel a spaceship needs to reach the moon from earth";
 
-        List<PanStepExecutionResult> previousSteps = [
+        List<PlanStepExecutionResult> previousSteps = [
             new ("find distance from earth to the moon", "The distance from earth to the moon is 384,400 km")
         ];
 

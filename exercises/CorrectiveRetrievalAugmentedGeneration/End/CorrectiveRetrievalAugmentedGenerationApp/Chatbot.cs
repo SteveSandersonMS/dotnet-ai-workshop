@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.AI;
+﻿using CorrectiveRetrievalAugmentedGenerationApp.Search;
+
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Qdrant.Client;
 
@@ -8,17 +10,14 @@ public class Chatbot(
     IChatClient chatClient,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
-    // use BingSearchTool
-    BingSearchTool bingSearchTool
-    // use DuckDuckGoSearchTool
-    //DuckDuckGoSearchTool duckDuckGoSearchTool
+    ISearchTool searchTool
     )
     : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         Product currentProduct = Helpers.GetCurrentProduct();
-        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, bingSearchTool);
+        ChatbotThread thread = new(chatClient, embeddingGenerator, qdrantClient, currentProduct, searchTool);
 
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Assistant: Hi! You're looking at the {currentProduct.Model}. What do you want to know about it?");

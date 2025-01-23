@@ -37,7 +37,7 @@ public class PlanExecutorTests
             new PlanStep("calculate necessary fuel for spaceship")
         ]);
 
-        PanStepExecutionResult result = await executor.ExecutePlanStep(plan);
+        PlanStepExecutionResult result = await executor.ExecutePlanStep(plan);
         using AssertionScope scope = new();
 
         result.Should().NotBeNull();

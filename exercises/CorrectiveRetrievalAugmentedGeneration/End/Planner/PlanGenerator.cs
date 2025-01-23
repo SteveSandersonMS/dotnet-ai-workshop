@@ -7,7 +7,7 @@ public class PlanGenerator(IChatClient chatClient)
 {
     private readonly IStructuredPredictor _structuredPredictor = chatClient.ToStructuredPredictor(typeof(Plan));
 
-    public async Task<Plan> GeneratePlanSync(string task, CancellationToken cancellationToken = default)
+    public async Task<Plan> GeneratePlanAsync(string task, CancellationToken cancellationToken = default)
     {
         ChatMessage[] messages = [
             new(ChatRole.System,

@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 
+using CorrectiveRetrievalAugmentedGenerationApp.Search;
+
 using Microsoft.Extensions.AI;
 
 using Planner;
@@ -14,10 +16,7 @@ public class ChatbotThread(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
     QdrantClient qdrantClient,
     Product currentProduct,
-    // use BingSearchTool
-    BingSearchTool bingSearchTool
-    // use DuckDuckGoSearchTool
-    //DuckDuckGoSearchTool duckDuckGoSearchTool
+    ISearchTool searchTool
     )
 {
     private readonly List<ChatMessage> _messages =
@@ -100,18 +99,18 @@ public class ChatbotThread(
                            </context>
                            """;
 
-            var plan = await planGenerator.GeneratePlanSync(
+            var plan = await planGenerator.GeneratePlanAsync(
                 task
                 , cancellationToken);
 
-            List<PanStepExecutionResult> pastSteps = [];
+            List<PlanStepExecutionResult> pastSteps = [];
 
             // pass bing search ai function so that the executor can search web for additional material
 
 
-            async Task<string> SearchTool([Description("The questions we want to answer searching bing")] string userQuestion)
+            async Task<string> SearchTool([Description("The questions we want to answer searching the web")] string userQuestion)
             {
-                var results = await bingSearchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
+                var results = await searchTool!.SearchWebAsync(userQuestion, 3, cancellationToken);
 
                 return string.Join("\n", results.Select(c => $"""
                                                               ## web page: {c.Url}
@@ -120,19 +119,6 @@ public class ChatbotThread(
 
                                                               """));
             }
-
-            // pass duckduckgo search ai function so that the executor can search web for additional material
-
-            //async Task<string> SearchTool([Description("The questions we want to answer searching duckduckgo")] string userQuestion)
-            //{
-            //    var results = await duckDuckGoSearchTool!.SearchWebAsync(userQuestion, cancellationToken);
-
-            //    return $"""
-            //           ## web page: {results.Url}
-            //           # Content
-            //           {results.Abstract}
-            //           """;
-            //}
 
             var options = new ChatOptions
             {

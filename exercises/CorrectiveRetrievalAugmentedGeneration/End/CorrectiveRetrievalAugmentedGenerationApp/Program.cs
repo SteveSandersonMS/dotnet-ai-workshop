@@ -2,6 +2,8 @@
 
 using Azure.AI.OpenAI;
 using CorrectiveRetrievalAugmentedGenerationApp;
+using CorrectiveRetrievalAugmentedGenerationApp.Search;
+
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

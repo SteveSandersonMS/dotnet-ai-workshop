@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Web;
 
-namespace CorrectiveRetrievalAugmentedGenerationApp;
+namespace CorrectiveRetrievalAugmentedGenerationApp.Search;
 
 /// <summary>
 /// Represents a tool for performing web searches using the Bing Search API. Follow instructions here to get an API key: https://docs.microsoft.com/en-us/azure/cognitive-services/bing-web-search/quickstarts/csharp#prerequisites
@@ -10,7 +10,7 @@ namespace CorrectiveRetrievalAugmentedGenerationApp;
 /// <param name="bingSearchApiKey">The API key for accessing the Bing Search API.</param>
 /// <param name="client">The HTTP client used to send requests.</param>
 /// <param name="allowedSiteList">An optional list of allowed sites to restrict the search results.</param>
-public class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnlyList<string>? allowedSiteList = null)
+public class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnlyList<string>? allowedSiteList = null) : ISearchTool
 {
     private const string BingSearchApiUrl = "https://api.bing.microsoft.com/v7.0/search";
 
@@ -23,7 +23,7 @@ public class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnl
     /// <param name="resultLimit">The maximum number of results to return.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of search results.</returns>
-    public async Task<IEnumerable<BingSearchResult>> SearchWebAsync(string query, int resultLimit = 3, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SearchResult>> SearchWebAsync(string query, int resultLimit = 3, CancellationToken cancellationToken = default)
     {
         NameValueCollection queryString = HttpUtility.ParseQueryString(string.Empty);
         string scopedQuery = BuildQuery(query);
@@ -41,7 +41,7 @@ public class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnl
             await JsonSerializer.DeserializeAsync<BingSearchResponse>(stream, s_jsonSerializerOptions,
                 cancellationToken) ??
             BingSearchResponse.Empty;
-        IEnumerable<BingSearchResult> selectedResults = result.WebPages.Value.Take(resultLimit);
+        IEnumerable<SearchResult> selectedResults = result.WebPages.Value.Take(resultLimit);
 
         return selectedResults;
 
@@ -61,7 +61,7 @@ public class BingSearchTool(string bingSearchApiKey, HttpClient client, IReadOnl
         }
     }
 
-    private record WebPages(IReadOnlyList<BingSearchResult> Value);
+    private record WebPages(IReadOnlyList<SearchResult> Value);
 
     private record BingSearchResponse(WebPages WebPages)
     {
