@@ -95,6 +95,7 @@ public class ConversationManager(RealtimeConversationClient client) : IDisposabl
         [Description("Determines whether a table is available on a given date for a given number of people")]
         public bool CheckTableAvailability(DateOnly date, int numPeople)
         {
+            await addMessage($"Checking table availability for {date}");
             return Random.Shared.NextDouble() < (1.0 / numPeople);
         }
 
