@@ -12,6 +12,9 @@ var openAiClient = new AzureOpenAIClient(
     new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!),
     new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!));
 
+// Or for OpenAI Platform:
+// var openAiClient = new OpenAI.OpenAIClient(builder.Configuration["OpenAI:Key"]!);
+
 // TODO: Register RealtimeConversationClient in DI
 
 var app = builder.Build();
