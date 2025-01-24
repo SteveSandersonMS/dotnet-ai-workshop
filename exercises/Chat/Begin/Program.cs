@@ -9,7 +9,7 @@ using System.ClientModel;
 // Set up DI etc
 var hostBuilder = Host.CreateApplicationBuilder(args);
 hostBuilder.Configuration.AddUserSecrets<Program>();
-hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Trace));
 
 // Register an IChatClient
 var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
