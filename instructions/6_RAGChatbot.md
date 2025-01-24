@@ -420,7 +420,7 @@ Switch over to work on the `Evaluation` project.
  * For VS users, set `Evaluation` as the startup project
  * Everyone else, prepare to `dotnet run` in the `Evaluation` directory
 
-In `Evaluation`'s `Program.cs`, find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely either Azure OpenAI or Ollama.
+In `Evaluation`'s `Program.cs`, find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely Azure OpenAI, OpenAI Platform, or Ollama.
 
 You'll see that `Program.cs` sets up all the dependencies needed to run your RAG logic - an `IChatClient`, an `IEmbeddingGenerator`, and a `QdrantClient`. It also loads the contents of a test dataset called `evalquestions.json`. Take a look in that file and you'll see it's a list of 500 sample question/answer pairs. These were all generated using AI in the same way that the manual PDFs were.
 
@@ -545,13 +545,24 @@ If you're using `gpt-4o-mini`, the score will likely average out at about 0.8. T
 
 We'll now try changing various parts of the system and determine what makes it better or worse. But first, let's try to decouple the "RAG LLM" from the "evaluation LLM". If you want to compare different language models, you only want to change the "RAG LLM" (the one used by the chatbot), while leaving the "evaluation LLM" (the one scoring answers) unchanged. That way there's a consistent judge applying the same interpretation of `how well answer_given represents the truth`.
 
-Find where `evaluationChatClient` is defined and update it *not* to use `innerChatClient`. Instead, make it have its own independent underlying provider, e.g., for OpenAI:
+Find where `evaluationChatClient` is defined and update it *not* to use `innerChatClient`. Instead, make it have its own independent underlying provider, e.g., for Azure OpenAI:
 
 ```cs
 var evaluationChatClient = new ChatClientBuilder(
         new AzureOpenAIClient(
             new Uri(config["AzureOpenAI:Endpoint"]!),
             new ApiKeyCredential(config["AzureOpenAI:Key"]!)).AsChatClient("gpt-4o-mini"))
+    .UseRetryOnRateLimit()
+    .Build();
+```
+
+... or for OpenAI Platform:
+
+```cs
+var evaluationChatClient = new ChatClientBuilder(
+        new OpenAI.Chat.ChatClient(
+            "gpt-4o-mini",
+            config["OpenAI:Key"]!).AsChatClient())
     .UseRetryOnRateLimit()
     .Build();
 ```
@@ -568,7 +579,7 @@ var evaluationChatClient = new ChatClientBuilder(
 Then, even if you change `innerChatClient`, you can leave `evaluationChatClient` unchanged.
 
 > [!TIP]
-> If at all possible, use OpenAI for `evaluationChatClient`, regardless of what you're using in `innerChatClient` for the chatbot. The whole thing will go so much faster.
+> If at all possible, use OpenAI or Azure OpenAI for `evaluationChatClient`, regardless of what you're using in `innerChatClient` for the chatbot. The whole thing will go so much faster.
 
 ### Can we make the prompt better or worse?
 
@@ -588,11 +599,11 @@ Can you find any changes to prompt phrasing that make it perform better? Or are 
 
 ### How much context is best?
 
-Go back to `ChatbotThread.cs` and find where `closestChunks` is computed. Currently it uses `limit: 3` (i.e., it includes the closest 3 chunks in context).
+Go back to `ChatbotThread.cs` and find where `closestChunks` is computed. Currently it uses `limit: 5` (i.e., it includes the closest 5 chunks in context).
 
 Could we get away with reducing this to 1? If the quality is still as good, that would make it cheaper, because there'd be fewer tokens going in.
 
-Does the quality go up if you increase it to 5? What about 10? What's optimal?
+Does the quality go up if you increase it to 10? What about 50? What's optimal?
 
 ### Comparing language models
 
