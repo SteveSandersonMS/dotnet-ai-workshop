@@ -24,7 +24,7 @@ To start:
    * Make sure Ollama is running and has the `all-minilm` model available
    * Make sure Qdrant, a vector database, is running in Docker
 
-If you run the project, you should see it claim to ingest many PDFs, but it actually doesn't do anything with them yet.
+If you run the project, you should see it claim to ingest many PDFs, but it's lying and doesn't ingest them at all yet.
 
 ## The scenario
 
@@ -163,7 +163,7 @@ Switch over to work on the `RetrievalAugmentedGenerationApp` project.
 
 In `Program.cs`, you'll see there's quite a lot of setup code. But none of this is a chatbot at all. It's just setting up an `IChatClient`, and `IEmbeddingGenerator`, and a `QdrantClient`.
 
-Find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely either Azure OpenAI or Ollama.
+Find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely one of Azure OpenAI, OpenAI Platform, or Ollama.
 
 ### Adding a chat loop
 
@@ -277,7 +277,7 @@ var closestChunks = await qdrantClient.SearchAsync(
     collectionName: "manuals",
     vector: userMessageEmbedding.ToArray(),
     filter: Qdrant.Client.Grpc.Conditions.Match("productId", currentProduct.ProductId),
-    limit: 3);
+    limit: 5);
 ```
 
 ### The "Augmented Generation" part of RAG
