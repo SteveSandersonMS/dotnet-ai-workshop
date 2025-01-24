@@ -37,7 +37,7 @@ Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.
       new Uri("http://localhost:11434"), "llava");
   ```
 
-  `llava` is one of the most common small image-capable models. While it lacks certain features such as native function calling, it is quite fast and behaves well. If you don't already have it, run `ollama pull llava` to get it. Alternatively you could try [`x/llama3.2-vision`](https://ollama.com/x/llama3.2-vision) which is more capable but will be more demanding on your hardware.
+  `llava` is one of the most common small image-capable models. While it lacks certain features such as native function calling, it is quite fast and behaves well. If you don't already have it, run `ollama pull llava` to get it. Alternatively you could try [`llama3.2-vision`](https://ollama.com/library/llama3.2-vision) which is more capable but will be more demanding on your hardware.
 
 ## Getting image descriptions
 
@@ -163,7 +163,7 @@ For example, consider image `3199.jpg` - there's no sensible `TrafficCamResult` 
 To address this, let's raise alerts if there's something wrong with the input image. This could also be used to raise alerts if there's something dangerous or strange on the road.
 
 > [!TIP]
-> The following instructions require a model that supports native function calling, such as `gpt-4o-mini` or `x/llama3.2-vision`. If you're using `llava`, skip ahead to the next section.
+> The following instructions require a model that supports native function calling, such as `gpt-4o-mini` or `llama3.2-vision`. If you're using `llava`, skip ahead to the next section.
 
 Define a C# function to call if there's an alert. Add this right above your `foreach` loop:
 
@@ -248,7 +248,7 @@ Console.WriteLine($"{name} status: {result.Status} (cars: {result.NumCars}, truc
 
 You should now see alert text for the problematic images and not for the OK ones.
 
-Bear in mind that a small model like `llava` is not going to compete on accuracy with bigger ones. If your hardware is capable enough, consider trying out a bigger llama-based model such as `x/llama3.2-vision` which supports both vision and native function calling.
+Bear in mind that a small model like `llava` is not going to compete on accuracy with bigger ones. If your hardware is capable enough, consider trying out a bigger llama-based model such as `llama3.2-vision` which supports both vision and native function calling.
 
 ## Optional: Add distributed caching
 
