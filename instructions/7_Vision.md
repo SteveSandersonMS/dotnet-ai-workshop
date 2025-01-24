@@ -8,24 +8,36 @@ Many up-to-date LLMs support *multi-modal* input and output. That is, besides te
 
 Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.cs`, find the variable `innerChatClient` and update its value according to the LLM service you wish to use.
 
-For Azure OpenAI, you should have code like this:
+* For Azure OpenAI, you should have code like this:
 
-```cs
-var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
-var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"]!), new ApiKeyCredential(azureOpenAiConfig["Key"]!))
-    .AsChatClient("gpt-4o-mini");
-```
+  ```cs
+  var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
+  var innerChatClient = new AzureOpenAIClient(
+      new Uri(azureOpenAiConfig["Endpoint"]!),
+      new ApiKeyCredential(azureOpenAiConfig["Key"]!))
+      .AsChatClient("gpt-4o-mini");
+  ```
 
-If you're using a model other than `gpt-4o-mini`, update this code. But do note that you must use a multi-modal model for this exercise.
+  If you're using a model other than `gpt-4o-mini`, update this code. But do note that you must use a multi-modal model for this exercise.
 
-For Ollama, you should assign a value like this:
+* For OpenAI Platform, you should have code like this:
 
-```cs
-IChatClient innerChatClient = new OllamaChatClient(
-    new Uri("http://localhost:11434"), "llava");
-```
+  ```cs
+  var openAiConfig = hostBuilder.Configuration.GetRequiredSection("OpenAI");
+  var innerChatClient = new OpenAI.Chat.ChatClient(
+      "gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+  ```
 
-`llava` is one of the most common small image-capable models. While it lacks certain features such as native function calling, it is quite fast and behaves well. If you don't already have it, run `ollama pull llava` to get it. Alternatively you could try [`x/llama3.2-vision`](https://ollama.com/x/llama3.2-vision) which is more capable but will be more demanding on your hardware.
+  If you're using a model other than `gpt-4o-mini`, update this code. But do note that you must use a multi-modal model for this exercise.
+
+* For Ollama, you should assign a value like this:
+
+  ```cs
+  IChatClient innerChatClient = new OllamaChatClient(
+      new Uri("http://localhost:11434"), "llava");
+  ```
+
+  `llava` is one of the most common small image-capable models. While it lacks certain features such as native function calling, it is quite fast and behaves well. If you don't already have it, run `ollama pull llava` to get it. Alternatively you could try [`x/llama3.2-vision`](https://ollama.com/x/llama3.2-vision) which is more capable but will be more demanding on your hardware.
 
 ## Getting image descriptions
 
