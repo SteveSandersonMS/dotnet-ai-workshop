@@ -8,7 +8,7 @@ namespace QuizApp.Components.Pages;
 public partial class Quiz : ComponentBase
 {
     // TODO: Decide on a quiz subject
-    private const string QuizSubject = "Modern .NET programming";
+    private const string QuizSubject = "Your choice of subject goes here. Be descriptive.";
 
     private ElementReference answerInput;
     private int numQuestions = 5;
