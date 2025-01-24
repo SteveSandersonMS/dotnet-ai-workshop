@@ -20,6 +20,9 @@ The two easiest options are:
      * Note that you'll need to come back here in a minute to find your *Endpoint URI* and *Key*.
    * For **OpenAI Platform**,
      * Visit https://platform.openai.com/ and log in (creating a new account if necessary)
+     * Navigate to the [Playground](https://platform.openai.com/playground/chat) page from the top menu. Make sure you can send a message and get back a response. If you get an error saying `You've reached your usage limit`, you will need to add credit to your OpenAI account:
+       * On the [Billing](https://platform.openai.com/settings/organization/billing/overview) page, you can add credit. To complete all the exercises in this workshop, it should be sufficient to add the minimum amount, $5 (USD).
+       * After adding credit, go back to the [playground](https://platform.openai.com/playground/chat) and make sure you can get a response. It can take a few minutes for credit to be activated. You might want to try changing the "model" setting to a basic one like `gpt-3.5-turbo-1106`.
      * Navigate to https://platform.openai.com/api-keys and create a new secret key. It's simplest to leave all the options as defaults (e.g., "Permissions: All").
      * You'll get a key in the form `sk-......`. Copy this and store it somewhere temporarily (e.g., in a text file). You'll need to use it soon.
 
@@ -102,6 +105,20 @@ In `Program.cs`, see the `TODO` comment block near the top. Replace it with one 
     ```
 
     Get both of these values from Azure OpenAI Studio. Notice that for Endpoint, **you're only supplying the part of the URL up the the end of the host**. Don't include `openai/deployments/...` or whatever else appears after it in Azure OpenAI Studio.
+
+ * If you're using OpenAI Platform:
+
+   ```cs
+   var innerChatClient = new OpenAI.Chat.ChatClient(
+       "gpt-4o-mini",
+       builder.Configuration["OpenAI:Key"]!).AsChatClient();
+   ```
+
+   Clearly you'll also need to supply a value for the `OpenAI:Key` config property. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:
+
+   ```
+   dotnet user-secrets set "OpenAI:Key" sk-abcdabcdabcdabcd
+   ```
 
 Next, register this in DI. You could just register `innerChatClient` directly by calling `builder.Services.AddSingleton(...)`, but we'll use the following helper that allows you to configure a pipeline, which we'll use in further sessions:
 
