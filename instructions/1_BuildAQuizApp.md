@@ -8,15 +8,21 @@ This starter exercise aims to get you started with using an LLM immediately. We 
 
 The two easiest options are:
 
- * **OpenAI** or **AzureOpenAI**. If you have an Azure account:
-   * For Azure, open the [Azure Portal](https://portal.azure.com) and choose "Create a Resource"
-   * Search for `openai` and choose "Azure OpenAI", then click "Create"
-   * Pick [a region that supports the model(s) you want to use](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models). For best results you'll use `gpt-4o-mini`, so any of `eastus`, `eastus2`, `westus`, or `swedencentral` are good choices.
-   * Continue accepting defaults until it's deployed. Deployment will take a few minutes.
-   * Go to the deployed resource, then click "Go to Azure OpenAI studio"
-   * In Azure OpenAI Studio, navigate to "Deployments" then click "Deploy Model" -> "Deploy Base Model"
-   * Pick and confirm `gpt-4o-mini`. Other models may work, but different versions of the models have different capabilities.
-   * Note that you'll need to come back here in a minute to find your *Endpoint URI* and *Key*.
+ * **OpenAI Platform** or **AzureOpenAI**.
+   * For **Azure OpenAI**, once you have an Azure account:
+     * Open the [Azure Portal](https://portal.azure.com) and choose "Create a Resource"
+     * Search for `openai` and choose "Azure OpenAI", then click "Create"
+     * Pick [a region that supports the model(s) you want to use](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models). For best results you'll use `gpt-4o-mini`, so any of `eastus`, `eastus2`, `westus`, or `swedencentral` are good choices.
+     * Continue accepting defaults until it's deployed. Deployment will take a few minutes.
+     * Go to the deployed resource, then click "Go to Azure OpenAI studio"
+     * In Azure OpenAI Studio, navigate to "Deployments" then click "Deploy Model" -> "Deploy Base Model"
+     * Pick and confirm `gpt-4o-mini`. Other models may work, but different versions of the models have different capabilities.
+     * Note that you'll need to come back here in a minute to find your *Endpoint URI* and *Key*.
+   * For **OpenAI Platform**,
+     * Visit https://platform.openai.com/ and log in (creating a new account if necessary)
+     * Navigate to https://platform.openai.com/api-keys and create a new secret key. It's simplest to leave all the options as defaults (e.g., "Permissions: All").
+     * You'll get a key in the form `sk-......`. Copy this and store it somewhere temporarily (e.g., in a text file). You'll need to use it soon.
+
  * **Ollama** can run LLMs locally. It's not as fast or accurate as the OpenAI services, unless you have a monster GPU, but is free. You will need a GPU otherwise it will be too slow.
    * Go to https://ollama.com/ and follow installation instructions
    * In a command prompt, make it fetch a model. This is a 4GiB file so may take a little time to download.
