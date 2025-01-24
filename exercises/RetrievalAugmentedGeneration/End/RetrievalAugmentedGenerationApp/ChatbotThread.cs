@@ -40,7 +40,7 @@ public class ChatbotThread(
             collectionName: "manuals",
             vector: userMessageEmbedding.ToArray(),
             filter: Qdrant.Client.Grpc.Conditions.Match("productId", currentProduct.ProductId),
-            limit: 3, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
+            limit: 5, cancellationToken: cancellationToken); // TODO: Evaluate with more or less
         var allContext = closestChunks.Select(c => c.Payload["text"].StringValue).ToArray();
 
         /*
