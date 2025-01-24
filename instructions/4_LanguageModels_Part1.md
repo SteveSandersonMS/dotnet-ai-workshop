@@ -10,21 +10,31 @@ This session is **part one of two** about language models. In the [second part](
 
 Start by opening the project `exercises/Chat/Begin`. Near the top, find the variable `innerChatClient` and update its value according to the LLM service you wish to use.
 
-For Azure OpenAI, you should have code like this:
+* For Azure OpenAI, you should have code like this:
 
-```cs
-var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
-var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"]!), new ApiKeyCredential(azureOpenAiConfig["Key"]!))
+  ```cs
+  var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
+  var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"]!), new ApiKeyCredential(azureOpenAiConfig["Key"]!))
     .AsChatClient("gpt-4o-mini");
-```
+  ```
 
-If you're using a model other than `gpt-4o-mini`, update this code.
+  If you're using a model other than `gpt-4o-mini`, update this code.
 
-For Ollama, you should assign a value like this:
+* For OpenAI Platform, you should assign a value like this:
 
-```cs
-var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");
-```
+  ```cs
+  // Or for OpenAI:
+  var openAiConfig = hostBuilder.Configuration.GetRequiredSection("OpenAI");
+  var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+  ```
+
+  If you're using a model other than `gpt-4o-mini`, update this code.
+
+* For Ollama, you should assign a value like this:
+
+  ```cs
+  var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");
+  ```
 
 **If possible, get access to *both* an OpenAI-based service and Ollama. It's instructive to try them both and compare the performance of different models.**
 

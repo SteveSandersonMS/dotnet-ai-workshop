@@ -15,8 +15,13 @@ hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(
 var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
 var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"]!), new ApiKeyCredential(azureOpenAiConfig["Key"]!))
     .AsChatClient("gpt-4o-mini");
+
+// Or for OpenAI:
+// var openAiConfig = hostBuilder.Configuration.GetRequiredSection("OpenAI");
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+
 // Or for Ollama:
-//var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");
+// var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");
 
 hostBuilder.Services.AddChatClient(innerChatClient);
 
