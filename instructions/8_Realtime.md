@@ -59,7 +59,9 @@ There is no registered service of type 'OpenAI.RealtimeConversation.RealtimeConv
 
 ### Registering the service in DI
 
-Open `Program.cs` and find this comment:
+Open `Program.cs` and make sure that `openAiClient`, defined near the top, is set up to use whichever one of Azure OpenAI or OpenAI Platform you're using. In other words, toggle which one of the two is commented out if you need.
+
+Next find this comment:
 
 ```cs
 // TODO: Register RealtimeConversationClient in DI
@@ -284,36 +286,15 @@ However, if you run it now, it won't actually call the functions. Try getting it
 
 This is similar to how `IChatClient` doesn't call functions automatically unless you add the `UseFunctionInvocation` middleware. But for `RealtimeConversationSession` there isn't yet any middleware so we'll have to do this manually.
 
-Add this to your `switch` statement:
+Add this *after* your `switch` statement:
 
 ```cs
-case ConversationItemStreamingFinishedUpdate itemFinished:
-    if (!string.IsNullOrEmpty(itemFinished.FunctionName))
-    {
-        await addMessageAsync($"Calling function: {itemFinished.FunctionName}({itemFinished.FunctionCallArguments})");
-        if (await itemFinished.GetFunctionCallOutputAsync(tools) is { } output)
-        {
-            await session.AddItemAsync(output);
-        }
-    }
-    break;
+// This is actually an extension method provided by Microsoft.Extensions.AI.OpenAI
+// It knows how to invoke an AIFunction and continue the realtime conversation
+await session.HandleToolCallsAsync(update, tools);
 ```
 
-If you run it now, it will *almost* work. Try booking a table - it will call `CheckTableAvailability` to determine availability, but then it won't actually reply or continue the conversation. You'll just be left waiting.
-
-The reason is that, by default, it only starts a reply when you stop talking. So if you speak again, it will resume the conversation. But this is strange and unnatural - we want it to continue the conversation automatically after getting function call results. Fortunately it's relatively easy to do - add to your `switch` statement:
-
-```cs
-case ConversationResponseFinishedUpdate responseFinished:
-    // If we added one or more function call results, instruct the model to respond to them
-    if (responseFinished.CreatedItems.Any(item => !string.IsNullOrEmpty(item.FunctionName)))
-    {
-        await session.StartResponseAsync();
-    }
-    break;
-```
-
-And now you finally have a working bookings hotline!
+If you run it now, it should work. Try booking a table - it will call `CheckTableAvailability` to determine availability, then will reply to the user.
 
 Remember that realtime is currently in beta/preview and can't yet be used in production. It has plenty of quirks, and the code you're using in this example might itself be imperfect (e.g., the audio sometimes gets cut off at the end). Hopefully this will all be streamlined by the time it's ready for production usage.
 
