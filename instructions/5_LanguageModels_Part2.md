@@ -130,6 +130,29 @@ If you really want to see that it's invoking `GetPrice`, you can put a breakpoin
 
 If you want, check the options you can set when calling `UseFunctionInvocation`. You can control policies such as the maximum number of function calls allowed, whether or not exception information will be disclosed to the LLM, and so on.
 
+### Hiding the log spam
+
+In this sample project, the log threshold is initially set to `LogLevel.Trace`. So by default, you'll see `trce` console lines like the following for each function call:
+
+```
+You: How much for 250
+trce: Microsoft.Extensions.AI.FunctionInvokingChatClient[1953841678]
+      Invoking __Main___g__GetPrice_0_1({
+        "count": 250
+      }).
+trce: Microsoft.Extensions.AI.FunctionInvokingChatClient[700532736]
+      __Main___g__GetPrice_0_1 invocation completed. Duration: 00:00:00.0002936. Result: 3997.5
+Bot: The price for 250 pairs of FOOTMONSTER brand socks would be $3,997.50!
+```
+
+This is nice for debugging or just seeing what's going on, but will be distracting. Avoid this by finding the following line near the top:
+
+```cs
+hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Trace));
+```
+
+... and change the `SetMinimumLevel` parameter value from `LogLevel.Trace` to `LogLevel.Information`.
+
 ## Adding more state
 
 What if we want to manage per-conversation state, make it available to the bot, and update that state over time? Let's add a shopping cart:
