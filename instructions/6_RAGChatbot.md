@@ -232,7 +232,7 @@ _messages.Add(new(ChatRole.User, userMessage));
 var response = await chatClient.GetResponseAsync(_messages, cancellationToken: cancellationToken);
 _messages.Add(response.Message);
 
-return (response.Message.Text!, Citation: null);
+return (response.Text, Citation: null);
 ```
 
 *Note*: You'll also need to add the `async` keyword to the `AnswerAsync` signature, i.e.:

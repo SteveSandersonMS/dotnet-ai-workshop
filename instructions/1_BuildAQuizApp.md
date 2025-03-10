@@ -151,7 +151,7 @@ var prompt = $"""
     the answer only needs to be a single word or phrase.
     """;
 var response = await chatClient.GetResponseAsync(prompt);
-currentQuestionText = response.Message.Text;
+currentQuestionText = response.Text;
 ```
 
 OK, let's try it out! Run the application again, and if all goes well, it will make up a question on your chosen subject.
@@ -186,7 +186,7 @@ var response = await chatClient.GetResponseAsync(prompt);
 Next let's display this in the UI, and award the user a point if they were correct:
 
 ```cs
-currentQuestionOutcome = response.Message.Text!;
+currentQuestionOutcome = response.Text;
 
 // There's a better way to do this using structured output. We'll get to that later.
 if (currentQuestionOutcome.StartsWith("CORRECT"))

@@ -101,7 +101,7 @@ public class ChatbotThread(
             """));
         var response = await chatClient.GetResponseAsync(_messages, chatOptions, cancellationToken: cancellationToken);
         _messages.Add(response.Message);
-        var answer = ParseResponse(response.Message.Text!);
+        var answer = ParseResponse(response.Text);
 
         // If the chatbot gave a citation, convert it to info to show in the UI
         var citation = answer.ManualExtractId.HasValue

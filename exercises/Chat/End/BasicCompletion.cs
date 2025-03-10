@@ -8,7 +8,7 @@ internal static class BasicCompletion
     {
         // Basic completion
         var response = await chatClient.GetResponseAsync("Explain how real AI compares to sci-fi AI in max 20 words.");
-        Console.WriteLine(response.Message.Text);
+        Console.WriteLine(response.Text);
         Console.WriteLine($"Tokens used: in={response.Usage?.InputTokenCount}, out={response.Usage?.OutputTokenCount}");
 
         // Streaming completion

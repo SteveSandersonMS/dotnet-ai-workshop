@@ -47,7 +47,7 @@ At the bottom of `Program.cs`, make a simple completion call:
 ```cs
 var response = await chatClient.GetResponseAsync(
     "Explain how real AI compares to sci-fi AI in max 20 words.");
-Console.WriteLine(response.Message.Text);
+Console.WriteLine(response.Text);
 Console.WriteLine($"Tokens used: in={response.Usage?.InputTokenCount}, out={response.Usage?.OutputTokenCount}");
 ```
 
@@ -55,7 +55,7 @@ Try it and verify your `IChatClient` works.
 
 ### Accessing provider-specific data
 
-Set a breakpoint on `Console.WriteLine(response.Message.Text);` and run again. In the debugger, explore the values returned on `response`. You should be able to find:
+Set a breakpoint on `Console.WriteLine(response.Text);` and run again. In the debugger, explore the values returned on `response`. You should be able to find:
 
  * `AdditionalProperties`, a string-object dictionary in which `IChatClient` implementations can place loosely-typed data that will show up in logging and telemetry.
  * `RawRepresentation`, the actual object from the underlying provider client library. You could use code like the following to access OpenAI-specific data, for example:

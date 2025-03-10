@@ -48,7 +48,7 @@ public partial class Quiz(IChatClient chatClient) : ComponentBase
             Don't repeat any of the previous questions: {previousQuestions}
             """;
         var response = await chatClient.GetResponseAsync(prompt);
-        currentQuestionText = response.Message.Text;
+        currentQuestionText = response.Text;
         previousQuestions += currentQuestionText + "\n";
     }
 
@@ -81,7 +81,7 @@ public partial class Quiz(IChatClient chatClient) : ComponentBase
                       INCORRECT: The Riemann hypothesis is still unsolved.
             """;
         var response = await chatClient.GetResponseAsync(prompt);
-        currentQuestionOutcome = response.Message.Text!;
+        currentQuestionOutcome = response.Text;
 
         // There's a better way to do this using structured output. We'll get to that later.
         if (currentQuestionOutcome.StartsWith("CORRECT"))

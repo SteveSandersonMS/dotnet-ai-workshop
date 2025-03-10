@@ -27,7 +27,7 @@ internal static class ChatBot
             var response = await chatClient.GetResponseAsync(messages, chatOptions);
             messages.Add(response.Message);
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Bot: {response.Message.Text}");
+            Console.WriteLine($"Bot: {response.Text}");
         }
     }
 

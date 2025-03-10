@@ -48,7 +48,7 @@ var message = new ChatMessage(ChatRole.User, "What's in this image?");
 message.Contents.Add(new ImageContent(File.ReadAllBytes(trafficImages[0]), "image/jpg"));
 
 var response = await chatClient.GetResponseAsync([message]);
-Console.WriteLine(response.Message.Text);
+Console.WriteLine(response.Text);
 ```
 
 If you run this, hopefully you'll get back a sensible description of the first image, perhaps along these lines:
@@ -69,7 +69,7 @@ foreach (var imagePath in trafficImages)
         """);
     message.Contents.Add(new ImageContent(File.ReadAllBytes(imagePath), "image/jpg"));
     var response = await chatClient.GetResponseAsync([message]);
-    Console.WriteLine(response.Message.Text);
+    Console.WriteLine(response.Text);
 }
 ```
 
@@ -102,7 +102,7 @@ Now update your code to use it. Replace this:
 
 ```cs
 var response = await chatClient.GetResponseAsync([message]);
-Console.WriteLine(response.Message.Text);
+Console.WriteLine(response.Text);
 ```
 
 ... with this:
