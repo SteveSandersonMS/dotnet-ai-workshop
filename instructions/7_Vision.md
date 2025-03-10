@@ -45,7 +45,7 @@ In the `traffic-cam` directory, you'll find a series of images from traffic came
 
 ```cs
 var message = new ChatMessage(ChatRole.User, "What's in this image?");
-message.Contents.Add(new ImageContent(File.ReadAllBytes(trafficImages[0]), "image/jpg"));
+message.Contents.Add(new DataContent(File.ReadAllBytes(trafficImages[0]), "image/jpg"));
 
 var response = await chatClient.GetResponseAsync([message]);
 Console.WriteLine(response.Text);
@@ -67,7 +67,7 @@ foreach (var imagePath in trafficImages)
     var message = new ChatMessage(ChatRole.User, $$"""
         Extract information from this image from camera {{name}}.
         """);
-    message.Contents.Add(new ImageContent(File.ReadAllBytes(imagePath), "image/jpg"));
+    message.Contents.Add(new DataContent(File.ReadAllBytes(imagePath), "image/jpg"));
     var response = await chatClient.GetResponseAsync([message]);
     Console.WriteLine(response.Text);
 }
