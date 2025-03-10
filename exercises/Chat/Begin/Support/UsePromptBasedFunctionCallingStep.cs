@@ -37,7 +37,8 @@ public static class UsePromptBasedFunctionCallingStep
             // response and convert those into FunctionCallContent.
             if (options?.Tools is { Count: > 0 })
             {
-                AddOrUpdateToolPrompt(chatMessages, options.Tools);
+                List<ChatMessage> chatMessagesList = [CreateToolPrompt(options.Tools), .. chatMessages.Select(m => m.Clone())];
+                chatMessages = chatMessagesList;
                 options = options.Clone();
                 options.Tools = null;
 
@@ -49,24 +50,22 @@ public static class UsePromptBasedFunctionCallingStep
 
                 // Since the point of this client is to avoid relying on the underlying model having
                 // native tool call support, we have to replace any "tool" or "toolcall" messages with
-                // "user" or "assistant" ones.
-                foreach (var message in chatMessages)
+                // "user" or "assistant" ones. We don't mutate the incoming messages, because the
+                // intent is only to modify the representation we send to the underlying model.
+                for (var messageIndex = 0; messageIndex < chatMessagesList.Count; messageIndex++)
                 {
+                    var message = chatMessagesList[messageIndex];
                     for (var itemIndex = 0; itemIndex < message.Contents.Count; itemIndex++)
                     {
                         if (message.Contents[itemIndex] is FunctionResultContent frc)
                         {
                             var toolCallResultJson = JsonSerializer.Serialize(new ToolCallResult { Id = frc.CallId, Result = frc.Result }, _jsonOptions);
-                            message.Role = ChatRole.User;
-                            message.Contents[itemIndex] = new TextContent(
-                                $"<tool_call_result>{toolCallResultJson}</tool_call_result>");
+                            chatMessagesList[messageIndex] = new ChatMessage(ChatRole.User, $"<tool_call_result>{toolCallResultJson}</tool_call_result>");
                         }
                         else if (message.Contents[itemIndex] is FunctionCallContent fcc)
                         {
                             var toolCallJson = JsonSerializer.Serialize(new { fcc.CallId, fcc.Name, fcc.Arguments }, _jsonOptions);
-                            message.Role = ChatRole.Assistant;
-                            message.Contents[itemIndex] = new TextContent(
-                                $"<tool_call_json>{toolCallJson}</tool_call_json>");
+                            chatMessagesList[messageIndex] = new ChatMessage(ChatRole.Assistant, $"<tool_call_json>{toolCallJson}</tool_call_json>");
                         }
                     }
                 }
@@ -74,10 +73,11 @@ public static class UsePromptBasedFunctionCallingStep
 
             var result = await base.GetResponseAsync(chatMessages, options, cancellationToken);
 
-            if (result.Choices.FirstOrDefault()?.Text is { } content && content.IndexOf("<tool_call_json>", StringComparison.Ordinal) is int startPos
+            if (result.Text is { } content
+                && content.IndexOf("<tool_call_json>", StringComparison.Ordinal) is int startPos
                 && startPos >= 0)
             {
-                var message = result.Choices.First();
+                var message = result.Messages.First();
                 var contentItem = message.Contents.SingleOrDefault();
                 content = content.Substring(startPos);
 
@@ -145,62 +145,25 @@ public static class UsePromptBasedFunctionCallingStep
             }
         }
 
-        private static void AddOrUpdateToolPrompt(IList<ChatMessage> chatMessages, IList<AITool> tools)
+        private static ChatMessage CreateToolPrompt(IList<AITool> tools)
         {
-            var existingToolPrompt = chatMessages.FirstOrDefault(c => c.Text?.StartsWith(MessageIntro, StringComparison.Ordinal) is true);
-            if (existingToolPrompt is null)
-            {
-                existingToolPrompt = new ChatMessage(ChatRole.System, (string?)null);
-                chatMessages.Insert(0, existingToolPrompt);
-            }
+            var toolDescriptorsJson = JsonSerializer.Serialize(tools.OfType<AIFunction>().Select(t => t.JsonSchema), _jsonOptions);
+            return new ChatMessage(ChatRole.System, $$"""
+                {{MessageIntro}}
 
-            var toolDescriptorsJson = JsonSerializer.Serialize(tools.OfType<AIFunction>().Select(ToToolDescriptor), _jsonOptions);
-            existingToolPrompt.Text = $$"""
-            {{MessageIntro}}
+                For each function call, return a JSON object with the function name and arguments within <tool_call_json></tool_call_json> XML tags
+                as follows:
+                <tool_calls>
+                  <tool_call_json>{"name": "tool_name", "arguments": { argname1: argval1, argname2: argval2, ... } }</tool_call_json>
+                </tool_calls>
+                Note that the contents of <tool_call_json></tool_call_json> MUST be a valid JSON object, with no other text.
 
-            For each function call, return a JSON object with the function name and arguments within <tool_call_json></tool_call_json> XML tags
-            as follows:
-            <tool_calls>
-              <tool_call_json>{"name": "tool_name", "arguments": { argname1: argval1, argname2: argval2, ... } }</tool_call_json>
-            </tool_calls>
-            Note that the contents of <tool_call_json></tool_call_json> MUST be a valid JSON object, with no other text.
+                Once you receive the result as a JSON object within <tool_call_result></tool_call_result> XML tags, use it to
+                answer the user's question without repeating the same tool call.
 
-            Once you receive the result as a JSON object within <tool_call_result></tool_call_result> XML tags, use it to
-            answer the user's question without repeating the same tool call.
-
-            Here are the available tools:
-            <tools>{{toolDescriptorsJson}}</tools>
-            """;
-        }
-
-        private static ToolDescriptor ToToolDescriptor(AIFunction tool) => new()
-        {
-            Name = tool.Metadata.Name,
-            Description = tool.Metadata.Description,
-            Arguments = tool.Metadata.Parameters.ToDictionary(
-                p => p.Name,
-                p => new ToolParameterDescriptor
-                {
-                    Type = p.ParameterType?.Name,
-                    Description = p.Description,
-                    Enum = p.ParameterType?.IsEnum == true ? Enum.GetNames(p.ParameterType) : null,
-                    Required = p.IsRequired,
-                }),
-        };
-
-        private sealed class ToolDescriptor
-        {
-            public string? Name { get; set; }
-            public string? Description { get; set; }
-            public IDictionary<string, ToolParameterDescriptor>? Arguments { get; set; }
-        }
-
-        private sealed class ToolParameterDescriptor
-        {
-            public string? Type { get; set; }
-            public string? Description { get; set; }
-            public bool? Required { get; set; }
-            public string[]? Enum { get; set; }
+                Here are the available tools:
+                <tools>{{toolDescriptorsJson}}</tools>
+                """);
         }
 
         private sealed class ToolCall
