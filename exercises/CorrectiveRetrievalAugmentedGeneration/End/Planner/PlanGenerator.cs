@@ -5,11 +5,9 @@ namespace Planner;
 
 public class PlanGenerator(IChatClient chatClient)
 {
-    private readonly IStructuredPredictor _structuredPredictor = chatClient.ToStructuredPredictor(typeof(Plan));
-
     public async Task<Plan> GeneratePlanAsync(string task, CancellationToken cancellationToken = default)
     {
-        ChatMessage[] messages = [
+        List<ChatMessage> messages = [
             new(ChatRole.System,
                 """
                 For the given objective, come up with a simple step by step plan.
@@ -18,9 +16,9 @@ public class PlanGenerator(IChatClient chatClient)
                 """),
             new(ChatRole.User, task)];
 
-        StructuredPredictionResult result = await _structuredPredictor.PredictAsync(messages, cancellationToken);
+        var result = await chatClient.CompleteAsync<Plan>(messages, cancellationToken: cancellationToken);
 
-        if (result.Value is not Plan plan)
+        if (!result.TryGetResult(out var plan))
         {
             throw new InvalidOperationException("No plan generated");
         }

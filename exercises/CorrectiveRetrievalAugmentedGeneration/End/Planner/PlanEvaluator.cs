@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.AI;
+﻿using System.ComponentModel;
+using Microsoft.Extensions.AI;
 
 using StructuredPrediction;
 
@@ -6,15 +7,13 @@ namespace Planner;
 
 public class PlanEvaluator(IChatClient chatClient)
 {
-    private readonly IStructuredPredictor _structuredPredictor = chatClient.ToStructuredPredictor(typeof(Plan), typeof(PlanResult));
-
     public async Task<PlanOrResult> EvaluatePlanAsync(string task, Plan currentPlan, List<PlanStepExecutionResult> previousStepExecutionResults,
         CancellationToken cancellationToken = default)
     {
         string plan = string.Join("\n", currentPlan.Steps.Select((step, i) => $"{i + 1}. {step.Action}"));
 
         string pastSteps = string.Join("\n", previousStepExecutionResults.Select((step, i) => $"{i + 1}.\tAction:{step.StepAction}\n\tResult: {step.Output}"));
-        ChatMessage[] messages =
+        List<ChatMessage> messages =
         [
             new(ChatRole.System,
                 $"""
@@ -36,14 +35,27 @@ public class PlanEvaluator(IChatClient chatClient)
                  {pastSteps}
                  </past_steps>
 
-                 Update your <original_plan> accordingly. If no more steps are needed to satisfy <objective> with the <past_steps> and you can return to the user, then respond with that as PlanResult. Otherwise, fill out the plan. Only add steps to the plan that still NEED to be done. Do not return previously done steps as part of the plan. If the past steps contains the final answer, then return that as the result, adding steps like 'report the result' is not appropriate and will fail the plan.
+                 Update your <original_plan> accordingly. If no more steps are needed to satisfy <objective> with the <past_steps> and you can return to the user, then respond with that as FinalResult. Otherwise, leave FinalResult as null fill out UpdatedPlan. Only add steps to the plan that still NEED to be done. Do not return previously done steps as part of the plan. If the past steps contains the final answer, then return that as the result, adding steps like 'report the result' is not appropriate and will fail the plan.
                  """)
         ];
 
-        StructuredPredictionResult result = await _structuredPredictor.PredictAsync(messages, cancellationToken);
-        Plan? newPlan = result.Value as Plan;
-        PlanResult? planResult = result.Value as PlanResult;
+        var result = await chatClient.CompleteAsync<PlanEvaluationResult>(messages, cancellationToken: cancellationToken);
+        if (!result.TryGetResult(out var planEvaluationResult)
+            || (planEvaluationResult.UpdatedPlan is null && planEvaluationResult.FinalResult is null))
+        {
+            throw new InvalidOperationException("No plan generated");
+        }
 
-        return new PlanOrResult(Plan: newPlan, Result: planResult);
+        return new PlanOrResult(Plan: planEvaluationResult.UpdatedPlan, Result: planEvaluationResult.FinalResult);
+    }
+
+    [Description("The result of the plan evaluation. This can be either a new plan or a final result. Exactly one of its two properties must be nonnull.")]
+    internal class PlanEvaluationResult
+    {
+        [Description("Specified when the plan is not yet complete. This is an updated version of the current plan and has at least one remaining step to complete.")]
+        public Plan? UpdatedPlan { get; set; }
+
+        [Description("Specified when the plan is already complete and the final result is known.")]
+        public PlanResult? FinalResult { get; set; }
     }
 }
