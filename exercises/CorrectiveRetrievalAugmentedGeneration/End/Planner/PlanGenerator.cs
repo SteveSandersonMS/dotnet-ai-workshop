@@ -17,7 +17,7 @@ public class PlanGenerator(IChatClient chatClient)
                 """),
             new(ChatRole.User, task)];
 
-        var result = await chatClient.CompleteAsync<Plan>(messages, cancellationToken: cancellationToken);
+        var result = await chatClient.GetResponseAsync<Plan>(messages, cancellationToken: cancellationToken);
 
         if (!result.TryGetResult(out var plan))
         {

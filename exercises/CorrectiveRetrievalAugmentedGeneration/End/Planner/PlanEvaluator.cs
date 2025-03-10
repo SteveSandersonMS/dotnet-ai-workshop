@@ -37,7 +37,7 @@ public class PlanEvaluator(IChatClient chatClient)
                  """)
         ];
 
-        var result = await chatClient.CompleteAsync<PlanEvaluationResult>(messages, cancellationToken: cancellationToken);
+        var result = await chatClient.GetResponseAsync<PlanEvaluationResult>(messages, cancellationToken: cancellationToken);
         if (!result.TryGetResult(out var planEvaluationResult)
             || (planEvaluationResult.UpdatedPlan is null && planEvaluationResult.FinalResult is null))
         {
