@@ -343,7 +343,7 @@ As you can see, it comes in two parts:
 Now to implement the logic, replace the `TODO: Override GetResponseAsync` comment with an implementation, e.g.:
 
 ```cs
-public override async Task<ChatCompletion> GetResponseAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+public override async Task<ChatCompletion> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
 {
     // Add an extra prompt
     var promptAugmentation = new ChatMessage(ChatRole.User, $"Always reply in the language {language}");
@@ -418,7 +418,7 @@ public static class UseRateLimitStep
         // It's not a separate rate limit for each user. You could do that but the implementation would be a bit different.
         RateLimiter rateLimit = new FixedWindowRateLimiter(new() { Window = window, QueueLimit = 1, PermitLimit = 1 });
 
-        public override async Task<ChatCompletion> GetResponseAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatCompletion> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             using var lease = await rateLimit.AcquireAsync(cancellationToken: cancellationToken);
             return await base.GetResponseAsync(chatMessages, options, cancellationToken);

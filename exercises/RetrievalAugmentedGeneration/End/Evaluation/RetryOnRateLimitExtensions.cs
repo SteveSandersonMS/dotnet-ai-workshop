@@ -15,7 +15,7 @@ public static class RetryOnRateLimitExtensions
 
     private class RetryOnRateLimitChatClient(IChatClient innerClient) : DelegatingChatClient(innerClient)
     {
-        public override async Task<ChatCompletion> GetResponseAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatCompletion> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             while (true)
             {
