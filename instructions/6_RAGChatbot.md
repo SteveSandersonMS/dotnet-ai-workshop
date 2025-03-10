@@ -478,7 +478,7 @@ var response = await evaluationChatClient.CompleteAsync<ScoreResponse>($$"""
     Score how well answer_given represents the truth. You must first give a short justification for your score.
     The score must be one of the following labels
      * Awful: The answer contains no relevant information, or information that contradicts the truth
-     * Poor: The answer fails fails to include key information from the truth
+     * Poor: The answer fails to include key information from the truth
      * Good: The answer includes the main points from the truth, but misses some facts
      * Perfect: The answer gives all relevant facts from the truth, without anything that contradicts it
 
