@@ -25,7 +25,7 @@ internal static class StructuredOutput
         foreach (var listingText in propertyListings)
         {
             // On gpt-4o-mini, the following is sufficient:
-            //var response = await chatClient.CompleteAsync<PropertyDetails>(
+            //var response = await chatClient.GetResponseAsync<PropertyDetails>(
             //    $"Extract information from the following property listing: {listingText}");
 
             // For smaller models, try this:
@@ -45,7 +45,7 @@ internal static class StructuredOutput
                     """),
                 new(ChatRole.User, listingText),
             };
-            var response = await chatClient.CompleteAsync<PropertyDetails>(messages); // If using Ollama or an OpenAI model that supports it, add useNativeJsonSchema:true
+            var response = await chatClient.GetResponseAsync<PropertyDetails>(messages); // If using Ollama or an OpenAI model that supports it, add useNativeJsonSchema:true
 
             if (response.TryGetResult(out var info))
             {

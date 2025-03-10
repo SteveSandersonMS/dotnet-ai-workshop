@@ -71,7 +71,7 @@ public class ChatbotThread(
             """));
 
         var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-        var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
+        var response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
         _messages.Add(response.Message);
 
         if (response.TryGetResult(out var answer))
@@ -99,7 +99,7 @@ public class ChatbotThread(
             Respond in plain text with your answer. Where possible, also add a citation to the product manual
             as an XML tag in the form <cite extractId='number' productId='number'>short verbatim quote</cite>.
             """));
-        var response = await chatClient.CompleteAsync(_messages, chatOptions, cancellationToken: cancellationToken);
+        var response = await chatClient.GetResponseAsync(_messages, chatOptions, cancellationToken: cancellationToken);
         _messages.Add(response.Message);
         var answer = ParseResponse(response.Message.Text!);
 

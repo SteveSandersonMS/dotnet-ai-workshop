@@ -60,7 +60,7 @@ public class ChatbotThread(
             }
             """));
 
-        var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: true);
+        var response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: true);
         _messages.Add(response.Message);
 
         if (response.TryGetResult(out ChatBotAnswer? answer))

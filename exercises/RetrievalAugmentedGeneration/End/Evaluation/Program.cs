@@ -55,7 +55,7 @@ await Parallel.ForEachAsync(evalQuestions, parallelOptions, async (evalQuestion,
 
     // Assess the quality of the answer
     // Note that in reality, "relevance" should be based on *all* the context we supply to the LLM, not just the citation it selects
-    var response = await evaluationChatClient.CompleteAsync<EvaluationResponse>($$"""
+    var response = await evaluationChatClient.GetResponseAsync<EvaluationResponse>($$"""
         There is an AI assistant that helps customer support staff to answer questions about products.
         You are evaluating the quality of the answer given by the AI assistant for the following question.
 

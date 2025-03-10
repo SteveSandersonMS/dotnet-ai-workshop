@@ -47,7 +47,7 @@ In the `traffic-cam` directory, you'll find a series of images from traffic came
 var message = new ChatMessage(ChatRole.User, "What's in this image?");
 message.Contents.Add(new ImageContent(File.ReadAllBytes(trafficImages[0]), "image/jpg"));
 
-var response = await chatClient.CompleteAsync([message]);
+var response = await chatClient.GetResponseAsync([message]);
 Console.WriteLine(response.Message.Text);
 ```
 
@@ -68,7 +68,7 @@ foreach (var imagePath in trafficImages)
         Extract information from this image from camera {{name}}.
         """);
     message.Contents.Add(new ImageContent(File.ReadAllBytes(imagePath), "image/jpg"));
-    var response = await chatClient.CompleteAsync([message]);
+    var response = await chatClient.GetResponseAsync([message]);
     Console.WriteLine(response.Message.Text);
 }
 ```
@@ -101,14 +101,14 @@ class TrafficCamResult
 Now update your code to use it. Replace this:
 
 ```cs
-var response = await chatClient.CompleteAsync([message]);
+var response = await chatClient.GetResponseAsync([message]);
 Console.WriteLine(response.Message.Text);
 ```
 
 ... with this:
 
 ```cs
-var response = await chatClient.CompleteAsync<TrafficCamResult>([message]);
+var response = await chatClient.GetResponseAsync<TrafficCamResult>([message]);
 if (response.TryGetResult(out var result))
 {
     Console.WriteLine($"{name} status: {result.Status} (cars: {result.NumCars}, trucks: {result.NumTrucks})");
@@ -144,10 +144,10 @@ var message = new ChatMessage(ChatRole.User, $$"""
     """);
 ```
 
-... and modify the `CompleteAsync<T>` call to:
+... and modify the `GetResponseAsync<T>` call to:
 
 ```cs
-var response = await chatClient.CompleteAsync<TrafficCamResult>([message], useNativeJsonSchema: isOllama);
+var response = await chatClient.GetResponseAsync<TrafficCamResult>([message], useNativeJsonSchema: isOllama);
 ```
 
 Setting `useNativeJsonSchema` causes Microsoft.Extensions.AI *not* to augment the prompt with JSON schema (since it assumes the model accepts JSON schema natively, and doesn't need prompt augmentation). This reduces the complexity of the prompt, making smaller models more reliable.
@@ -178,10 +178,10 @@ var raiseAlert = AIFunctionFactory.Create((string cameraName, string alertReason
 var chatOptions = new ChatOptions { Tools = [raiseAlert] };
 ```
 
-Now update your `CompleteAsync` call to use it:
+Now update your `GetResponseAsync` call to use it:
 
 ```cs
-var response = await chatClient.CompleteAsync<TrafficCamResult>([message], chatOptions, useNativeJsonSchema: isOllama);
+var response = await chatClient.GetResponseAsync<TrafficCamResult>([message], chatOptions, useNativeJsonSchema: isOllama);
 ```
 
 And don't forget to actually enable function invocation in your pipeline! Add `UseFunctionInvocation` to your `hostBuilder.Services.AddChatClient` call as follows:

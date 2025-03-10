@@ -124,7 +124,7 @@ public async Task<EvaluationResponse> EvaluateAsync(string question, string cont
 {
     // Assess the quality of the answer
     // Note that in reality, "relevance" should be based on *all* the context we supply to the LLM, not just the citation it selects
-    var response = await chatClient.CompleteAsync<EvaluationResponse>($$"""
+    var response = await chatClient.GetResponseAsync<EvaluationResponse>($$"""
     There is an AI assistant that helps customer support staff to answer questions about products.
     You are evaluating the quality of the answer given by the AI assistant for the following question.
 

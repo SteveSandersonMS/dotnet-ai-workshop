@@ -15,7 +15,7 @@ public class PlanExecutor(IChatClient chatClient)
 
                          You are tasked with executing step 1, {task}.
                          """;
-        ChatCompletion response = await chatClient.CompleteAsync([new ChatMessage(ChatRole.User, prompt)], options, cancellationToken: cancellationToken);
+        ChatCompletion response = await chatClient.GetResponseAsync([new ChatMessage(ChatRole.User, prompt)], options, cancellationToken: cancellationToken);
         string? output = response.Message.Text;
         return new PlanStepExecutionResult(task, Output:output??string.Empty);
     }

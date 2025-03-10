@@ -229,7 +229,7 @@ Fill out `AnswerAsync` with this logic:
 
 ```cs
 _messages.Add(new(ChatRole.User, userMessage));
-var response = await chatClient.CompleteAsync(_messages, cancellationToken: cancellationToken);
+var response = await chatClient.GetResponseAsync(_messages, cancellationToken: cancellationToken);
 _messages.Add(response.Message);
 
 return (response.Message.Text!, Citation: null);
@@ -308,7 +308,7 @@ _messages.Add(new(ChatRole.User, $$"""
     """));
 
 var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
-var response = await chatClient.CompleteAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
+var response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
 _messages.Add(response.Message);
 
 return response.TryGetResult(out var answer)
@@ -318,7 +318,7 @@ return response.TryGetResult(out var answer)
 
 As you can see, it's aggressively prompting the LLM to use *only* the information from `closestChunks`, and not make up any other claims. It's also asking for a citation, though we're not using that yet.
 
-Try running it now. If you want, set a breakpoint on the line that calls `chatClient.CompleteAsync` and inspect the chat history being passed in. Hopefully you'll see context relevant to your query.
+Try running it now. If you want, set a breakpoint on the line that calls `chatClient.GetResponseAsync` and inspect the chat history being passed in. Hopefully you'll see context relevant to your query.
 
 For example, if you pick product 130 (the Bluetooth speaker), you could have this conversation:
 
@@ -467,7 +467,7 @@ After the `var answer = await thread.AnswerAsync(...)` call but before the `lock
 
 ```cs
 // Assess the quality of the answer
-var response = await evaluationChatClient.CompleteAsync<ScoreResponse>($$"""
+var response = await evaluationChatClient.GetResponseAsync<ScoreResponse>($$"""
     There is an AI assistant that helps customer support staff to answer questions about products.
     You are evaluating the quality of the answer given by the AI assistant for the following question.
 
@@ -655,7 +655,7 @@ Now update the prompt to ask for three scores:
 ```cs
 // Assess the quality of the answer
 // Note that ideally, "relevance" should be based on *all* the context we supply to the LLM, not just the citation it selects
-var response = await evaluationChatClient.CompleteAsync<EvaluationResponse>($$"""
+var response = await evaluationChatClient.GetResponseAsync<EvaluationResponse>($$"""
     There is an AI assistant that helps customer support staff to answer questions about products.
     You are evaluating the quality of the answer given by the AI assistant for the following question.
 

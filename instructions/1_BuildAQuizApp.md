@@ -150,7 +150,7 @@ var prompt = $"""
     Reply only with the question and no other text. Ask factual questions for which
     the answer only needs to be a single word or phrase.
     """;
-var response = await chatClient.CompleteAsync(prompt);
+var response = await chatClient.GetResponseAsync(prompt);
 currentQuestionText = response.Message.Text;
 ```
 
@@ -178,7 +178,7 @@ var prompt = $"""
     Examples: CORRECT: And did you know, Jupiter is made of gas?
               INCORRECT: The Riemann hypothesis is still unsolved.
     """;
-var response = await chatClient.CompleteAsync(prompt);
+var response = await chatClient.GetResponseAsync(prompt);
 ```
 
 **WARNING:** This is intentionaly bad code for several reasons. We'll come back to fix this later.

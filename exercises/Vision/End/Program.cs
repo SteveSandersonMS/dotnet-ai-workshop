@@ -47,7 +47,7 @@ foreach (var imagePath in trafficImages)
         not just because of traffic volume.
         """);
     message.Contents.Add(new ImageContent(File.ReadAllBytes(imagePath), "image/jpg"));
-    var response = await chatClient.CompleteAsync<TrafficCamResult>([message], chatOptions, useNativeJsonSchema: isOllama);
+    var response = await chatClient.GetResponseAsync<TrafficCamResult>([message], chatOptions, useNativeJsonSchema: isOllama);
 
     if (response.TryGetResult(out var result))
     {

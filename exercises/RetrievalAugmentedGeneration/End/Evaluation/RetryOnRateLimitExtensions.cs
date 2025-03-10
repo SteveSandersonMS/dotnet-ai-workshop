@@ -15,13 +15,13 @@ public static class RetryOnRateLimitExtensions
 
     private class RetryOnRateLimitChatClient(IChatClient innerClient) : DelegatingChatClient(innerClient)
     {
-        public override async Task<ChatCompletion> CompleteAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatCompletion> GetResponseAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             while (true)
             {
                 try
                 {
-                    return await base.CompleteAsync(chatMessages, options, cancellationToken);
+                    return await base.GetResponseAsync(chatMessages, options, cancellationToken);
                 }
                 catch (ClientResultException ex) when (ex.Message.Contains("HTTP 429"))
                 {

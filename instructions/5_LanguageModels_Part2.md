@@ -40,7 +40,7 @@ while (true)
     messages.Add(new(ChatRole.User, input));
 
     // Get reply
-    var response = await chatClient.CompleteAsync(messages);
+    var response = await chatClient.GetResponseAsync(messages);
     messages.Add(response.Message);
     Console.ForegroundColor = ConsoleColor.Green;
     Console.WriteLine($"Bot: {response.Message.Text}");
@@ -59,9 +59,9 @@ You: What's the result if we add another 1?
 Bot: If you add another 1 to 2, you get 3. Just like how you can always have more comfort with an extra pair of FOOTMONSTER brand socks! Grab yours while they're on sale - your feet will thank you!
 ```
 
-Remember that sending `CompleteAsync` calls to the LLM doesn't cause it to learn or update its weights in any way. It's stateless. The only thing that makes the above conversation stateful is that you're adding all the messages to a `List<ChatMessage>`, and resending the entire chat history on every call.
+Remember that sending `GetResponseAsync` calls to the LLM doesn't cause it to learn or update its weights in any way. It's stateless. The only thing that makes the above conversation stateful is that you're adding all the messages to a `List<ChatMessage>`, and resending the entire chat history on every call.
 
-**Optional exercise:** If you want, try changing from `CompleteAsync` to `CompleteStreamingAsync`, so that it displays the bot's replies in realtime while they are being generated. You'll also need to accumulate all the chunks in a `StringBuilder` so you can add a corresponding message to `messages` when it's finished replying. *Note: if you're using Ollama, you'll need to change it back to non-streaming before the next exercise, because Ollama doesn't yet support function calling and streaming at the same time.*
+**Optional exercise:** If you want, try changing from `GetResponseAsync` to `GetStreamingResponseAsync`, so that it displays the bot's replies in realtime while they are being generated. You'll also need to accumulate all the chunks in a `StringBuilder` so you can add a corresponding message to `messages` when it's finished replying. *Note: if you're using Ollama, you'll need to change it back to non-streaming before the next exercise, because Ollama doesn't yet support function calling and streaming at the same time.*
 
 ## Function calling (a.k.a. tool calling)
 
@@ -90,10 +90,10 @@ AIFunction getPriceTool = AIFunctionFactory.Create(GetPrice);
 var chatOptions = new ChatOptions { Tools = [getPriceTool] };
 ```
 
-... and finally update the existing `CompleteAsync` call to use it:
+... and finally update the existing `GetResponseAsync` call to use it:
 
 ```cs
-var response = await chatClient.CompleteAsync(messages, chatOptions);
+var response = await chatClient.GetResponseAsync(messages, chatOptions);
 ```
 
 Now if you run the app, you can try asking about the price, but you won't yet get an answer:
@@ -298,7 +298,7 @@ hostBuilder.Services.AddSingleton(services =>
 
 So as you can see, the pipeline is a sequence of `IChatClient` instances, each of which holds a reference to the next one in the chain, until the final "inner" chat client (which is usually one that calls an external AI service over the network).
 
-When there's a call, e.g., to `CompleteAsync`, this starts with the outer `IChatClient` which typically does something and passes the call through to the next in the chain, and this repeats all the way through to the end.
+When there's a call, e.g., to `GetResponseAsync`, this starts with the outer `IChatClient` which typically does something and passes the call through to the next in the chain, and this repeats all the way through to the end.
 
 ### What's the point of all this?
 
@@ -330,7 +330,7 @@ public static class UseLanguageStep
     // This is the actual middleware implementation
     private class UseLanguageChatClient(IChatClient next, string language) : DelegatingChatClient(next)
     {
-        // TODO: Override CompleteAsync
+        // TODO: Override GetResponseAsync
     }
 }
 ```
@@ -340,10 +340,10 @@ As you can see, it comes in two parts:
  * The actual implementation, which typically is a class derived from `DelegatingChatClient`. Use of that base class is optional (you can implement `IChatClient` directly if you prefer) but simplifies things by automatically passing through any calls to the next item in the pipeline.
  * An extension method on `ChatClientBuilder` that makes it easy to register into a pipeline.
 
-Now to implement the logic, replace the `TODO: Override CompleteAsync` comment with an implementation, e.g.:
+Now to implement the logic, replace the `TODO: Override GetResponseAsync` comment with an implementation, e.g.:
 
 ```cs
-public override async Task<ChatCompletion> CompleteAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+public override async Task<ChatCompletion> GetResponseAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
 {
     // Add an extra prompt
     var promptAugmentation = new ChatMessage(ChatRole.User, $"Always reply in the language {language}");
@@ -352,7 +352,7 @@ public override async Task<ChatCompletion> CompleteAsync(IList<ChatMessage> chat
     try
     {
         // Pass through to rest of pipeline
-        return await base.CompleteAsync(chatMessages, options, cancellationToken);
+        return await base.GetResponseAsync(chatMessages, options, cancellationToken);
     }
     finally
     {
@@ -381,7 +381,7 @@ Bot: Helo! Sut gallaf eich helpu heddiw? Peidiwch â cholli'r cyfle i brynu sgar
 
 Things like function calling should continue to work the same.
 
-Note that your `UseLanguage` middleware does **not** currently take effect for `CompleteStreamingAsync` calls, because you didn't override that method. It's not very hard to do this if you want.
+Note that your `UseLanguage` middleware does **not** currently take effect for `GetStreamingResponseAsync` calls, because you didn't override that method. It's not very hard to do this if you want.
 
 ## Optional: Build a rate-limiting middleware step
 
@@ -418,10 +418,10 @@ public static class UseRateLimitStep
         // It's not a separate rate limit for each user. You could do that but the implementation would be a bit different.
         RateLimiter rateLimit = new FixedWindowRateLimiter(new() { Window = window, QueueLimit = 1, PermitLimit = 1 });
 
-        public override async Task<ChatCompletion> CompleteAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatCompletion> GetResponseAsync(IList<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             using var lease = await rateLimit.AcquireAsync(cancellationToken: cancellationToken);
-            return await base.CompleteAsync(chatMessages, options, cancellationToken);
+            return await base.GetResponseAsync(chatMessages, options, cancellationToken);
         }
     }
 }

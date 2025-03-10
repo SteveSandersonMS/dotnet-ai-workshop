@@ -40,12 +40,12 @@ Start by opening the project `exercises/Chat/Begin`. Near the top, find the vari
 
 ## Basic completions
 
-The simplest LLM API you'll use is `CompleteAsync`, which has an overload that takes just a plain prompt string and returns the entire completion.
+The simplest LLM API you'll use is `GetResponseAsync`, which has an overload that takes just a plain prompt string and returns the entire completion.
 
 At the bottom of `Program.cs`, make a simple completion call:
 
 ```cs
-var response = await chatClient.CompleteAsync(
+var response = await chatClient.GetResponseAsync(
     "Explain how real AI compares to sci-fi AI in max 20 words.");
 Console.WriteLine(response.Message.Text);
 Console.WriteLine($"Tokens used: in={response.Usage?.InputTokenCount}, out={response.Usage?.OutputTokenCount}");
@@ -76,7 +76,7 @@ If the LLM is returning a long response, you might want to start displaying it w
 Try the following code:
 
 ```cs
-var responseStream = chatClient.CompleteStreamingAsync("Explain how real AI compares to sci-fi AI in max 200 words.");
+var responseStream = chatClient.GetStreamingResponseAsync("Explain how real AI compares to sci-fi AI in max 200 words.");
 await foreach (var message in responseStream)
 {
     Console.Write(message.Text);
@@ -100,7 +100,7 @@ Despite the name, `IChatClient` isn't only for building chat-based UIs! That's a
 
 ## Structured output
 
-So far we've only used `CompleteAsync` to return arbitrary, unstructured text. But when automating business processes, we normally don't want the result to be arbitrary text written in a human language like English. We want structured data: objects, enums, arrays, flags, and so on.
+So far we've only used `GetResponseAsync` to return arbitrary, unstructured text. But when automating business processes, we normally don't want the result to be arbitrary text written in a human language like English. We want structured data: objects, enums, arrays, flags, and so on.
 
 Instead of returning arbitrary strings, let's get `IChatClient` to return .NET objects matching a business domain.
 
@@ -149,14 +149,14 @@ class PropertyDetails
 enum ListingType { Sale, Rental }
 ```
 
-We'll loop through the source data and use the generic-typed overload `CompleteAsync<T>`.
+We'll loop through the source data and use the generic-typed overload `GetResponseAsync<T>`.
 
 *Note: You'll need to insert the following code above the `PropertyDetails` class definition. This is a C# compiler limitation related to top-level statements.*
 
 ```cs
 foreach (var listingText in propertyListings)
 {
-    var response = await chatClient.CompleteAsync<PropertyDetails>(
+    var response = await chatClient.GetResponseAsync<PropertyDetails>(
         $"Extract information from the following property listing: {listingText}");
 
     if (response.TryGetResult(out var info))
@@ -176,7 +176,7 @@ Does it work? In my experience:
  * `gpt-4o-mini` will produce near-perfect results every time without any further prompting
  * Small models on Ollama (e.g., 7 or 8-billion parameter ones like the default `llama3.1`) are much more hit-and-miss. It will probably produce good output on about 50% of the inputs. For others it might miss properties or even return invalid data.
 
-Regardless of whether this works for you, let's understand what's happening behind the scenes. LLMs can't return a `PropertyDetails` directly, so `CompleteAsync<T>` augments your prompt by describing the JSON schema of the data to return. Then, `response.TryGetResult` does JSON-parsing on the result.
+Regardless of whether this works for you, let's understand what's happening behind the scenes. LLMs can't return a `PropertyDetails` directly, so `GetResponseAsync<T>` augments your prompt by describing the JSON schema of the data to return. Then, `response.TryGetResult` does JSON-parsing on the result.
 
 To see this for yourself, find the call to `AddChatClient` near the top of `Program.cs`, and insert `UseLogging` as follows:
 
@@ -224,7 +224,7 @@ The problem is that smaller models aren't very good at understanding JSON schema
 So, replace this code:
 
 ```cs
-var response = await chatClient.CompleteAsync<PropertyDetails>(
+var response = await chatClient.GetResponseAsync<PropertyDetails>(
     $"Extract information from the following property listing: {listingText}");
 ```
 
@@ -247,7 +247,7 @@ var messages = new List<ChatMessage>
         """),
     new(ChatRole.User, listingText),
 };
-var response = await chatClient.CompleteAsync<PropertyDetails>(messages);
+var response = await chatClient.GetResponseAsync<PropertyDetails>(messages);
 ```
 
 Any better? It will probably work perfectly on `llama3.1` every time now, and even `phi3:mini` will give great results.
@@ -284,10 +284,10 @@ To replace it, define a result type at the end of the class:
 private record MarkingResult(bool IsCorrect, string Explanation);
 ```
 
-... and then edit `SubmitAnswerAsync`'s call to `CompleteAsync` so it looks like the following:
+... and then edit `SubmitAnswerAsync`'s call to `GetResponseAsync` so it looks like the following:
 
 ```cs
-var response = await chatClient.CompleteAsync<MarkingResult>(prompt);
+var response = await chatClient.GetResponseAsync<MarkingResult>(prompt);
 if (response.TryGetResult(out var result))
 {
     if (result.IsCorrect)
@@ -337,7 +337,7 @@ enum Category { AI, ProgrammingLanguages, Startups, History, Business, Society }
 Can you use structured output to write out a list of stories grouped by category?
 
 > [!TIP]
-> There are two main ways you can go. You could make a separate `CompleteAsync<T>` call for each story, or you could make a single call asking the LLM to classify all the stories at once. Which option do you prefer?
+> There are two main ways you can go. You could make a separate `GetResponseAsync<T>` call for each story, or you could make a single call asking the LLM to classify all the stories at once. Which option do you prefer?
 
 Expand the section below for a possible solution.
 
@@ -356,7 +356,7 @@ record CategorizedHNStory(int Id, string Title, Category Category);
 var stories = await GetTopStories(20);
 
 // Categorize them all at once
-var response = await chatClient.CompleteAsync<CategorizedHNStory[]>(
+var response = await chatClient.GetResponseAsync<CategorizedHNStory[]>(
     $"For each of the following news stories, decide on a suitable category: {JsonSerializer.Serialize(stories)}");
 
 // Display results
@@ -382,7 +382,7 @@ If you're trying to use a small model on Ollama, you may find the above code pro
 // Categorize each of them individually, but in parallel
 var categorized = await Task.WhenAll(stories.Select(async story =>
 {
-    var response = await chatClient.CompleteAsync<Category>(
+    var response = await chatClient.GetResponseAsync<Category>(
         $$"""
         For the following news story, decide on a suitable category: {{story.Title}}
         Respond with one of the following enum values, and no other output: {{string.Join(", ", Enum.GetValues<Category>())}}
