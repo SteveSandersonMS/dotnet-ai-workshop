@@ -14,7 +14,7 @@ public class PlanGeneratorTests
     public PlanGeneratorTests()
     {
         IConfigurationBuilder builder = new ConfigurationBuilder()
-            .AddUserSecrets<StructuredChatClientTests>();
+            .AddUserSecrets<PlanEvaluatorTests>();
         _configuration = builder.Build();
     }
 

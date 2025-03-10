@@ -15,7 +15,7 @@ public class PlanExecutorTests
     public PlanExecutorTests()
     {
         IConfigurationBuilder builder = new ConfigurationBuilder()
-            .AddUserSecrets<StructuredChatClientTests>();
+            .AddUserSecrets<PlanEvaluatorTests>();
         _configuration = builder.Build();
     }
 
@@ -27,15 +27,16 @@ public class PlanExecutorTests
         IChatClient chatClient = new AzureOpenAIClient(
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
-
             .AsChatClient("gpt-4o-mini");
-        
 
         PlanExecutor executor = new(chatClient);
-        Plan plan = new([
-            new PlanStep("find distance from earth to the moon"),
-            new PlanStep("calculate necessary fuel for spaceship")
-        ]);
+        Plan plan = new()
+        {
+            Steps = [
+                "find distance from earth to the moon",
+                "calculate necessary fuel for spaceship"
+            ]
+        };
 
         PlanStepExecutionResult result = await executor.ExecutePlanStep(plan);
         using AssertionScope scope = new();

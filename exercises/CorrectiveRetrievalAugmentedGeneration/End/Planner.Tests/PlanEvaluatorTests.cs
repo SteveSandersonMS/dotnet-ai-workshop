@@ -15,7 +15,7 @@ public class PlanEvaluatorTests
     public PlanEvaluatorTests()
     {
         IConfigurationBuilder builder = new ConfigurationBuilder()
-            .AddUserSecrets<StructuredChatClientTests>();
+            .AddUserSecrets<PlanEvaluatorTests>();
         _configuration = builder.Build();
     }
 
@@ -27,13 +27,11 @@ public class PlanEvaluatorTests
         IChatClient chatClient = new AzureOpenAIClient(
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
-
+            
             .AsChatClient("gpt-4o-mini");
         PlanEvaluator planEvaluator = new (chatClient);
 
-        Plan plan = new ([
-            new PlanStep("calculate necessary fuel for spaceship to cover distance between earth and the moon")
-        ]);
+        Plan plan = new() { Steps = ["calculate necessary fuel for spaceship to cover distance between earth and the moon"] };
 
         string task = "find how much fuel a spaceship needs to reach the moon from earth";
 
@@ -63,11 +61,14 @@ public class PlanEvaluatorTests
             .AsChatClient("gpt-4o-mini");
         PlanEvaluator planEvaluator = new(chatClient);
 
-        Plan plan = new ([
-            new PlanStep("find distance from earth to the moon"),
-            new PlanStep("find out ship fuel consumptions"),
-            new PlanStep("calculate necessary fuel for the spaceship to cover the distance")
-        ]);
+        Plan plan = new()
+        {
+            Steps = [
+                "find distance from earth to the moon",
+                "find out ship fuel consumptions",
+                "calculate necessary fuel for the spaceship to cover the distance"
+            ]
+        };
 
         string task = "find how much fuel a spaceship needs to reach the moon from earth";
 

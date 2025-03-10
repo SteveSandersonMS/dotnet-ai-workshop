@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
 using Microsoft.Extensions.AI;
 
-using StructuredPrediction;
-
 namespace Planner;
 
 public class PlanEvaluator(IChatClient chatClient)
@@ -10,7 +8,7 @@ public class PlanEvaluator(IChatClient chatClient)
     public async Task<PlanOrResult> EvaluatePlanAsync(string task, Plan currentPlan, List<PlanStepExecutionResult> previousStepExecutionResults,
         CancellationToken cancellationToken = default)
     {
-        string plan = string.Join("\n", currentPlan.Steps.Select((step, i) => $"{i + 1}. {step.Action}"));
+        string plan = string.Join("\n", currentPlan.Steps.Select((step, i) => $"{i + 1}. {step}"));
 
         string pastSteps = string.Join("\n", previousStepExecutionResults.Select((step, i) => $"{i + 1}.\tAction:{step.StepAction}\n\tResult: {step.Output}"));
         List<ChatMessage> messages =

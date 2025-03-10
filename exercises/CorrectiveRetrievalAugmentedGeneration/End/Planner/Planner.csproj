@@ -11,8 +11,4 @@
     <PackageReference Include="Microsoft.Extensions.AI" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\StructuredPrediction\StructuredPrediction.csproj" />
-  </ItemGroup>
-
 </Project>
