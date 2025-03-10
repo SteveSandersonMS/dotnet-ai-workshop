@@ -31,7 +31,7 @@ public static class UsePromptBasedFunctionCallingStep
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
-        public override async Task<ChatCompletion> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             // Our goal is to convert tools into a prompt describing them, then to detect tool calls in the
             // response and convert those into FunctionCallContent.
