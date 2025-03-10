@@ -41,7 +41,7 @@ while (true)
 
     // Get reply
     var response = await chatClient.GetResponseAsync(messages);
-    messages.Add(response.Message);
+    messages.AddMessages(response);
     Console.ForegroundColor = ConsoleColor.Green;
     Console.WriteLine($"Bot: {response.Text}");
 }

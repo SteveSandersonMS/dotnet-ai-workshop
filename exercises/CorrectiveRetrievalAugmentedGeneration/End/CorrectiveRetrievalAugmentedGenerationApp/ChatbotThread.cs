@@ -216,7 +216,7 @@ public class ChatbotThread(
 
         ChatCompletion<ChatBotAnswer> response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: true);
 
-        _messages.Add(response.Message);
+        _messages.AddMessages(response);
 
         if (response.TryGetResult(out ChatBotAnswer? answer))
         {

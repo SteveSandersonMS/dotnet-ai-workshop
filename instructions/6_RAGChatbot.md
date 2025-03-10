@@ -230,7 +230,7 @@ Fill out `AnswerAsync` with this logic:
 ```cs
 _messages.Add(new(ChatRole.User, userMessage));
 var response = await chatClient.GetResponseAsync(_messages, cancellationToken: cancellationToken);
-_messages.Add(response.Message);
+_messages.AddMessages(response);
 
 return (response.Text, Citation: null);
 ```
@@ -309,7 +309,7 @@ _messages.Add(new(ChatRole.User, $$"""
 
 var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
 var response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: isOllama);
-_messages.Add(response.Message);
+_messages.AddMessages(response);
 
 return response.TryGetResult(out var answer)
     ? (answer.AnswerText, Citation: null)
