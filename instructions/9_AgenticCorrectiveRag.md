@@ -192,8 +192,6 @@ First let's break down few things we need to consider and use.
 
 LLMs can generate plans to accomplish a goal, giving us back a list of steps. A plan is structured information, so we want to represent it with strongly-typed C# objects. Each step might be represented as a different type of object (e.g., search a vector DB, search the web, run some code, etc.).
 
-To assist with this, the example app includes a project called `StructuredPrediction` containing utilities to create an `IStructuredPredictor` from a `IChatClient`. This extends `CompleteAsync<T>` by being able to return multile different types instead of just one single type `T`.
-
 #### Registering a search tool in DI
 
 We'll give the agent the ability to fill in knowledge gaps by searching the web.
