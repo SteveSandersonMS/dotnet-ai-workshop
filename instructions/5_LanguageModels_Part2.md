@@ -61,7 +61,28 @@ Bot: If you add another 1 to 2, you get 3. Just like how you can always have mor
 
 Remember that sending `GetResponseAsync` calls to the LLM doesn't cause it to learn or update its weights in any way. It's stateless. The only thing that makes the above conversation stateful is that you're adding all the messages to a `List<ChatMessage>`, and resending the entire chat history on every call.
 
-**Optional exercise:** If you want, try changing from `GetResponseAsync` to `GetStreamingResponseAsync`, so that it displays the bot's replies in realtime while they are being generated. You'll also need to accumulate all the chunks in a `StringBuilder` so you can add a corresponding message to `messages` when it's finished replying. *Note: if you're using Ollama, you'll need to change it back to non-streaming before the next exercise, because Ollama doesn't yet support function calling and streaming at the same time.*
+**Optional exercise:** If you want, try changing from `GetResponseAsync` to `GetStreamingResponseAsync`, so that it displays the bot's replies in realtime while they are being generated. You'll also need to accumulate all the chunks in a `StringBuilder` so you can add a corresponding message to `messages` when it's finished replying.
+
+<details>
+<summary>SOLUTION</summary>
+
+You can replace the `// Get reply` part of the above code with:
+
+```cs
+// Get reply
+Console.ForegroundColor = ConsoleColor.Green;
+Console.Write($"Bot: ");
+
+var streamingResponse = chatClient.GetStreamingResponseAsync(messages);
+var messageBuilder = new StringBuilder();
+await foreach (var chunk in streamingResponse)
+{
+    Console.Write(chunk.Text);
+    messageBuilder.Append(chunk.Text);
+}
+messages.Add(new(ChatRole.Assistant, messageBuilder.ToString()));
+```
+</details>
 
 ## Function calling (a.k.a. tool calling)
 
