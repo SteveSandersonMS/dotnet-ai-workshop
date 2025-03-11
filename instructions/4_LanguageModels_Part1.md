@@ -231,8 +231,8 @@ var response = await chatClient.GetResponseAsync<PropertyDetails>(
 ... with the following:
 
 ```cs
-var messages = new List<ChatMessage>
-{
+var response = await chatClient.GetResponseAsync<PropertyDetails>(
+[
     new(ChatRole.System, """
         Extract information from the following property listing.
 
@@ -246,8 +246,7 @@ var messages = new List<ChatMessage>
         }
         """),
     new(ChatRole.User, listingText),
-};
-var response = await chatClient.GetResponseAsync<PropertyDetails>(messages);
+]);
 ```
 
 Any better? It will probably work perfectly on `llama3.1` every time now, and even `phi3:mini` will give great results.
