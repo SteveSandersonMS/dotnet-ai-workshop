@@ -364,26 +364,13 @@ As you can see, it comes in two parts:
 Now to implement the logic, replace the `TODO: Override GetResponseAsync` comment with an implementation, e.g.:
 
 ```cs
-public override async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
 {
     // Add an extra prompt
     var promptAugmentation = new ChatMessage(ChatRole.User, $"Always reply in the language {language}");
-    chatMessages.Add(promptAugmentation);
-
-    try
-    {
-        // Pass through to rest of pipeline
-        return await base.GetResponseAsync(chatMessages, options, cancellationToken);
-    }
-    finally
-    {
-        // Clean up
-        chatMessages.Remove(promptAugmentation);
-    }
+    return base.GetResponseAsync([.. messages, promptAugmentation], options, cancellationToken);
 }
 ```
-
-The "clean up" phase here is optional. Doing this means the caller's chat history (i.e., their `List<ChatMessage>`) won't include the *Always reply in language...* message after the call completes. Normally it's good for prompt augmentation *not* to leave behind modifications to the chat history, but there may be cases where you do want to.
 
 Now to use this, update your `AddChatClient` near the top of `Program.cs`:
 
