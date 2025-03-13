@@ -30,6 +30,7 @@ As for AI services, you can use any of the following:
 
 | Service | Notes |
 | --- | --- |
+| GitHub Models (free) | Ideal. Instructions provided. |
 | OpenAI platform | Ideal. Instructions provided. |
 | Azure OpenAI | Ideal. Instructions provided. |
 | Ollama (local) | Instructions provided, but some things are trickier to make work well, and it's nowhere near as fast |
