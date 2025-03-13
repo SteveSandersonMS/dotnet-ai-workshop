@@ -10,7 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 //  - It can be any IChatClient implementation, for example AzureOpenAIClient or OllamaChatClient
 //  - See instructions for sample code
 
-
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 var app = builder.Build();

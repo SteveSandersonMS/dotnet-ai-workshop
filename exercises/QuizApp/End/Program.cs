@@ -5,12 +5,18 @@ using System.ClientModel;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// For GitHub Models or Azure OpenAI:
 var innerChatClient = new AzureOpenAIClient(
     new Uri(builder.Configuration["AI:Endpoint"] ?? throw new InvalidOperationException("Missing AI:Endpoint")),
     new ApiKeyCredential(builder.Configuration["AI:Key"] ?? throw new InvalidOperationException("Missing AI:Key")))
     .AsChatClient("gpt-4o-mini");
+
+// Or for OpenAI Platform:
+// var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
+
 // Or for Ollama:
-//IChatClient innerChatClient = new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1");
+// var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
