@@ -9,11 +9,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var openAiClient = new AzureOpenAIClient(
-    new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!),
-    new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!));
+    new Uri(builder.Configuration["AI:Endpoint"]!),
+    new ApiKeyCredential(builder.Configuration["AI:Key"]!));
 
 // Or for OpenAI Platform:
-// var openAiClient = new OpenAI.OpenAIClient(builder.Configuration["OpenAI:Key"]!);
+// var openAiClient = new OpenAI.OpenAIClient(builder.Configuration["AI:Key"]!);
 
 // TODO: Register RealtimeConversationClient in DI
 

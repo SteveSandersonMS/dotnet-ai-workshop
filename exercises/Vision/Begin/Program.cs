@@ -11,14 +11,14 @@ hostBuilder.Configuration.AddUserSecrets<Program>();
 
 // Register an IChatClient
 
-// For Azure OpenAI:
-var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
-var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"]!), new ApiKeyCredential(azureOpenAiConfig["Key"]!))
+// For GitHub Models or Azure OpenAI:
+var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
+var innerChatClient = new AzureOpenAIClient(new Uri(aiConfig["Endpoint"]!), new ApiKeyCredential(aiConfig["Key"]!))
     .AsChatClient("gpt-4o-mini");
 
 // Or for OpenAI Platform:
-// var openAiConfig = hostBuilder.Configuration.GetRequiredSection("OpenAI");
-// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+// var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
 
 // Or for Ollama:
 // IChatClient innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llava");

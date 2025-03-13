@@ -550,8 +550,8 @@ Find where `evaluationChatClient` is defined and update it *not* to use `innerCh
 ```cs
 var evaluationChatClient = new ChatClientBuilder(
         new AzureOpenAIClient(
-            new Uri(config["AzureOpenAI:Endpoint"]!),
-            new ApiKeyCredential(config["AzureOpenAI:Key"]!)).AsChatClient("gpt-4o-mini"))
+            new Uri(config["AI:Endpoint"]!),
+            new ApiKeyCredential(config["AI:Key"]!)).AsChatClient("gpt-4o-mini"))
     .UseRetryOnRateLimit()
     .Build();
 ```
@@ -562,7 +562,7 @@ var evaluationChatClient = new ChatClientBuilder(
 var evaluationChatClient = new ChatClientBuilder(
         new OpenAI.Chat.ChatClient(
             "gpt-4o-mini",
-            config["OpenAI:Key"]!).AsChatClient())
+            config["AI:Key"]!).AsChatClient())
     .UseRetryOnRateLimit()
     .Build();
 ```

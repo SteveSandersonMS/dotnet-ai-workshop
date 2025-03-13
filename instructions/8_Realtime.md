@@ -40,8 +40,8 @@ If you're using Azure OpenAI, then you need to deploy an instance of the `gpt-4o
 ```
 cd exercises/Realtime/Begin
 
-dotnet user-secrets set "AzureOpenAI:Endpoint" https://HOSTNAME.openai.azure.com/
-dotnet user-secrets set "AzureOpenAI:Key" abcdabcdabcdabcd
+dotnet user-secrets set "AI:Endpoint" https://HOSTNAME.openai.azure.com/
+dotnet user-secrets set "AI:Key" abcdabcdabcdabcd
 ```
 
 ## Open and run the project

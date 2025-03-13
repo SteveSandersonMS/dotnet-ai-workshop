@@ -22,8 +22,8 @@ public class PlanEvaluatorTests
     [Fact]
     public async Task generates_result_if_all_steps_are_performed()
     {
-        string endpoint = _configuration["AzureOpenAI:Endpoint"] ?? string.Empty;
-        string key = _configuration["AzureOpenAI:Key"] ?? string.Empty;
+        string endpoint = _configuration["AI:Endpoint"] ?? string.Empty;
+        string key = _configuration["AI:Key"] ?? string.Empty;
         IChatClient chatClient = new AzureOpenAIClient(
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
@@ -52,8 +52,8 @@ public class PlanEvaluatorTests
     [Fact]
     public async Task generates_updated_plan()
     {
-        string endpoint = _configuration["AzureOpenAI:Endpoint"] ?? string.Empty;
-        string key = _configuration["AzureOpenAI:Key"] ?? string.Empty;
+        string endpoint = _configuration["AI:Endpoint"] ?? string.Empty;
+        string key = _configuration["AI:Key"] ?? string.Empty;
         IChatClient chatClient = new AzureOpenAIClient(
                 new Uri(endpoint),
                 new ApiKeyCredential(key))

@@ -22,8 +22,8 @@ public class PlanGeneratorTests
     [Fact]
     public async Task generates_plan_to_accomplish_task()
     {
-        string endpoint = _configuration["AzureOpenAI:Endpoint"] ?? string.Empty;
-        string key = _configuration["AzureOpenAI:Key"] ?? string.Empty;
+        string endpoint = _configuration["AI:Endpoint"] ?? string.Empty;
+        string key = _configuration["AI:Key"] ?? string.Empty;
         IChatClient chatClient = new AzureOpenAIClient(
                 new Uri(endpoint),
                 new ApiKeyCredential(key))

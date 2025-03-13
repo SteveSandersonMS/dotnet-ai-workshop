@@ -11,13 +11,13 @@ using Evaluation;
 
 var config = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
 
-// For Azure OpenAI:
-IChatClient innerChatClient = new AzureOpenAIClient(new Uri(config["AzureOpenAI:Endpoint"]!), new ApiKeyCredential(config["AzureOpenAI:Key"]!))
+// For GitHub Models or Azure OpenAI:
+IChatClient innerChatClient = new AzureOpenAIClient(new Uri(config["AI:Endpoint"]!), new ApiKeyCredential(config["AI:Key"]!))
     .AsChatClient("gpt-4o-mini");
 
 // Or for OpenAI Platform:
-// var openAiConfig = config.GetRequiredSection("OpenAI");
-// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+// var aiConfig = config.GetRequiredSection("AI");
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
 
 // Or for Ollama:
 // IChatClient innerChatClient = new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1");

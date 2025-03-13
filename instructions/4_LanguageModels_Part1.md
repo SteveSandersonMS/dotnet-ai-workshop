@@ -13,8 +13,8 @@ Start by opening the project `exercises/Chat/Begin`. Near the top, find the vari
 * For Azure OpenAI, you should have code like this:
 
   ```cs
-  var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
-  var innerChatClient = new AzureOpenAIClient(new Uri(azureOpenAiConfig["Endpoint"]!), new ApiKeyCredential(azureOpenAiConfig["Key"]!))
+  var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
+  var innerChatClient = new AzureOpenAIClient(new Uri(aiConfig["Endpoint"]!), new ApiKeyCredential(aiConfig["Key"]!))
     .AsChatClient("gpt-4o-mini");
   ```
 
@@ -24,8 +24,8 @@ Start by opening the project `exercises/Chat/Begin`. Near the top, find the vari
 
   ```cs
   // Or for OpenAI:
-  var openAiConfig = hostBuilder.Configuration.GetRequiredSection("OpenAI");
-  var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+  var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
+  var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
   ```
 
   If you're using a model other than `gpt-4o-mini`, update this code.

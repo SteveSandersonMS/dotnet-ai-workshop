@@ -13,13 +13,13 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 builder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 
-// For Azure OpenAI:
-IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!), new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!))
+// For GitHub Models or Azure OpenAI:
+IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuration["AI:Endpoint"]!), new ApiKeyCredential(builder.Configuration["AI:Key"]!))
     .AsChatClient("gpt-4o-mini");
 
 // Or for OpenAI Platform:
-// var openAiConfig = builder.Configuration.GetRequiredSection("OpenAI");
-// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+// var aiConfig = builder.Configuration.GetRequiredSection("AI");
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
 
 // Or for Ollama:
 // IChatClient innerChatClient = new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1");

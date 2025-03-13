@@ -97,6 +97,27 @@ The main API you'll use to interact with LLMs is `IChatClient`. We'll cover many
 
 In `Program.cs`, see the `TODO` comment block near the top. Replace it with one of the following code blocks:
 
+ * If you're using **GitHub Models** or **Azure OpenAI**:
+
+    ```cs
+    // Note that AzureOpenAIClient works with both GitHub Models and Azure OpenAI endpoints
+    var innerChatClient = new AzureOpenAIClient( 
+        new Uri(builder.Configuration["AI:Endpoint"]!),
+        new ApiKeyCredential(builder.Configuration["AI:Key"]!))
+        .AsChatClient("gpt-4o-mini");
+    ```
+
+    Clearly you'll also need to supply values for these AI endpoint and key config properties. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:
+
+    ```
+    dotnet user-secrets set "AI:Endpoint" https://your_endpoint_see_below/
+    dotnet user-secrets set "AI:Key" your_key_see_below
+    ```
+
+    For GitHub Models, the endpoint value will be `https://models.inference.ai.azure.com/`, and the key will be the string starting with `github_pat_` which you received when getting an API key earlier.
+
+    For Azure OpenAI, the endpoint value will look like `https://HOSTNAME.openai.azure.com/`. Get both the Endpoint and Key values from Azure AI Foundry portal. Notice that for Endpoint, **you're only supplying the part of the URL up the the end of the host**. Don't include `openai/deployments/...` or whatever else appears after it in Azure AI Foundry portal.
+
  * If you're using Ollama:
 
     ```cs
@@ -104,36 +125,18 @@ In `Program.cs`, see the `TODO` comment block near the top. Replace it with one 
         new Uri("http://127.0.0.1:11434"), "llama3.1");
     ```
 
- * If you're using Azure OpenAI:
-
-    ```cs
-    var innerChatClient = new AzureOpenAIClient(
-        new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!),
-        new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!))
-        .AsChatClient("gpt-4o-mini");
-    ```
-
-    Clearly you'll also need to supply values for these AzureOpenAI config properties. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:
-
-    ```
-    dotnet user-secrets set "AzureOpenAI:Endpoint" https://HOSTNAME.openai.azure.com/
-    dotnet user-secrets set "AzureOpenAI:Key" abcdabcdabcdabcd
-    ```
-
-    Get both of these values from Azure AI Foundry portal. Notice that for Endpoint, **you're only supplying the part of the URL up the the end of the host**. Don't include `openai/deployments/...` or whatever else appears after it in Azure AI Foundry portal.
-
  * If you're using OpenAI Platform:
 
    ```cs
    var innerChatClient = new OpenAI.Chat.ChatClient(
        "gpt-4o-mini",
-       builder.Configuration["OpenAI:Key"]!).AsChatClient();
+       builder.Configuration["AI:Key"]!).AsChatClient();
    ```
 
-   Clearly you'll also need to supply a value for the `OpenAI:Key` config property. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:
+   Clearly you'll also need to supply a value for the `AI:Key` config property. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:
 
    ```
-   dotnet user-secrets set "OpenAI:Key" sk-abcdabcdabcdabcd
+   dotnet user-secrets set "AI:Key" sk-abcdabcdabcdabcd
    ```
 
 Next, register this in DI. You could just register `innerChatClient` directly by calling `builder.Services.AddSingleton(...)`, but we'll use the following helper that allows you to configure a pipeline, which we'll use in further sessions:

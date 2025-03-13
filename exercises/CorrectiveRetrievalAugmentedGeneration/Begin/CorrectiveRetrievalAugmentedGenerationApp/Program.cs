@@ -13,7 +13,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 
-IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!), new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!))
+IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuration["AI:Endpoint"]!), new ApiKeyCredential(builder.Configuration["AI:Key"]!))
     .AsChatClient("gpt-4o-mini");
 
 // Register services

@@ -11,10 +11,10 @@ Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.
 * For Azure OpenAI, you should have code like this:
 
   ```cs
-  var azureOpenAiConfig = hostBuilder.Configuration.GetRequiredSection("AzureOpenAI");
+  var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
   var innerChatClient = new AzureOpenAIClient(
-      new Uri(azureOpenAiConfig["Endpoint"]!),
-      new ApiKeyCredential(azureOpenAiConfig["Key"]!))
+      new Uri(aiConfig["Endpoint"]!),
+      new ApiKeyCredential(aiConfig["Key"]!))
       .AsChatClient("gpt-4o-mini");
   ```
 
@@ -23,9 +23,9 @@ Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.
 * For OpenAI Platform, you should have code like this:
 
   ```cs
-  var openAiConfig = hostBuilder.Configuration.GetRequiredSection("OpenAI");
+  var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
   var innerChatClient = new OpenAI.Chat.ChatClient(
-      "gpt-4o-mini", openAiConfig["Key"]!).AsChatClient();
+      "gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
   ```
 
   If you're using a model other than `gpt-4o-mini`, update this code. But do note that you must use a multi-modal model for this exercise.

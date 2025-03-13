@@ -9,8 +9,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var openAiClient = new AzureOpenAIClient(
-    new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!),
-    new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!));
+    new Uri(builder.Configuration["AI:Endpoint"]!),
+    new ApiKeyCredential(builder.Configuration["AI:Key"]!));
 var realtimeClient = openAiClient.GetRealtimeConversationClient("gpt-4o-realtime-preview");
 builder.Services.AddSingleton(realtimeClient);
 

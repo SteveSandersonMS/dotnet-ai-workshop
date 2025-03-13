@@ -6,8 +6,8 @@ using System.ClientModel;
 var builder = WebApplication.CreateBuilder(args);
 
 var innerChatClient = new AzureOpenAIClient(
-    new Uri(builder.Configuration["AzureOpenAI:Endpoint"] ?? throw new InvalidOperationException("Missing AzureOpenAI:Endpoint")),
-    new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"] ?? throw new InvalidOperationException("Missing AzureOpenAI:Key")))
+    new Uri(builder.Configuration["AI:Endpoint"] ?? throw new InvalidOperationException("Missing AI:Endpoint")),
+    new ApiKeyCredential(builder.Configuration["AI:Key"] ?? throw new InvalidOperationException("Missing AI:Key")))
     .AsChatClient("gpt-4o-mini");
 // Or for Ollama:
 //IChatClient innerChatClient = new OllamaChatClient(new Uri("http://127.0.0.1:11434"), "llama3.1");
