@@ -15,8 +15,8 @@ hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(
 
 // For GitHub Models or Azure OpenAI:
 var innerChatClient = new AzureOpenAIClient(
-        new Uri(hostBuilder.Configuration["AI:Endpoint"]!),
-        new ApiKeyCredential(hostBuilder.Configuration["AI:Key"]!))
+    new Uri(hostBuilder.Configuration["AI:Endpoint"]!),
+    new ApiKeyCredential(hostBuilder.Configuration["AI:Key"]!))
     .AsChatClient("gpt-4o-mini");
 
 // Or for OpenAI Platform:
