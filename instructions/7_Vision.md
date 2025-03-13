@@ -8,7 +8,7 @@ Many up-to-date LLMs support *multi-modal* input and output. That is, besides te
 
 Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.cs`, find the variable `innerChatClient` and update its value according to the LLM service you wish to use.
 
-* For Azure OpenAI, you should have code like this:
+* For GitHub Models or Azure OpenAI, you should have code like this:
 
   ```cs
   var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");

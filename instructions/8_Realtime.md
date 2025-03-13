@@ -1,7 +1,7 @@
 # Realtime
 
 > [!TIP]
-> **This chapter uses an OpenAI-specific feature and cannot currently be done using Ollama**. If you don't have access to OpenAI or Azure OpenAI, you'll need either to pair-program with someone who does, or skip this chapter and try out some of the more advanced exercises from other chapters instead.
+> **This chapter uses an OpenAI-specific feature and cannot currently be done using Ollama or GitHub Models**. If you don't have access to OpenAI or Azure OpenAI, you'll need either to pair-program with someone who does, or skip this chapter and try out some of the more advanced exercises from other chapters instead. It's possible that GitHub Models might add support for realtime models in the future, but at the time of writing that's not included in its model catalog.
 
 **Realtime** is a relatively recent step forwards in capabilities, currently limited to OpenAI and Azure OpenAI. It's all about producing **low-latency multi-modal interaction**, so that users can speak instead of type, and get reactions at near-human speeds.
 

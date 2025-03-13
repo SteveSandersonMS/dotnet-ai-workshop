@@ -72,7 +72,7 @@ Switch over to work on the CRAG project:
 
 In `Program.cs`, you'll see there's quite a lot of setup code. But none of this is a chatbot at all. It's just setting up an `IChatClient`, and `IEmbeddingGenerator`, and a `QdrantClient`.
 
-Find where `IChatClient innerChatClient` is declared and make sure it's using the Azure OpenAI backend as we will require to perform structured parsing. While it's technically possible to achieve this with smaller models on Ollama, you would encounter reliability issues that would distract from the understanding of CRAG that this section aims to focus on.
+Find where `IChatClient innerChatClient` is declared and make sure it's using the GitHub Models, Azure OpenAI, or OpenAI Platform backend as we will require to perform structured parsing. While it's technically possible to achieve this with smaller models on Ollama, you would encounter reliability issues that would distract from the understanding of CRAG that this section aims to focus on.
 
 ### Ranking and filtering RAG results 
 

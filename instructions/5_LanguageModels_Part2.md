@@ -8,7 +8,7 @@ The main capabilities you'll learn about are *function calling* and *middleware*
 
 Continue from the project `exercises/Chat/Begin` that you were using in [the previous session](./4_LanguageModels_Part1.md).
 
-If at all possible, **it's really a lot better to use OpenAI/Azure OpenAI for the following exercises (rather than Ollama)**. If you temporarily switched to use Ollama for the structured output exercise, switch back now.
+If at all possible, **it's really a lot better to use GitHub Models or OpenAI/Azure OpenAI for the following exercises (rather than Ollama)**. If you temporarily switched to use Ollama for the structured output exercise, switch back now.
 
 If you do want to use Ollama for the following exercises that's fine but you'll likely hit reliabiity issues. There's a whole section about this, and suggested mitigations, entitled *Troubles with small models* below.
 

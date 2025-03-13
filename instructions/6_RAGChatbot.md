@@ -163,7 +163,7 @@ Switch over to work on the `RetrievalAugmentedGenerationApp` project.
 
 In `Program.cs`, you'll see there's quite a lot of setup code. But none of this is a chatbot at all. It's just setting up an `IChatClient`, and `IEmbeddingGenerator`, and a `QdrantClient`.
 
-Find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely one of Azure OpenAI, OpenAI Platform, or Ollama.
+Find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely one of GitHub Models, Azure OpenAI, OpenAI Platform, or Ollama.
 
 ### Adding a chat loop
 
@@ -420,7 +420,7 @@ Switch over to work on the `Evaluation` project.
  * For VS users, set `Evaluation` as the startup project
  * Everyone else, prepare to `dotnet run` in the `Evaluation` directory
 
-In `Evaluation`'s `Program.cs`, find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely Azure OpenAI, OpenAI Platform, or Ollama.
+In `Evaluation`'s `Program.cs`, find where `IChatClient innerChatClient` is declared and make sure it's using the LLM backend you want to use, likely GitHub Models, Azure OpenAI, OpenAI Platform, or Ollama.
 
 You'll see that `Program.cs` sets up all the dependencies needed to run your RAG logic - an `IChatClient`, an `IEmbeddingGenerator`, and a `QdrantClient`. It also loads the contents of a test dataset called `evalquestions.json`. Take a look in that file and you'll see it's a list of 500 sample question/answer pairs. These were all generated using AI in the same way that the manual PDFs were.
 
@@ -545,7 +545,7 @@ If you're using `gpt-4o-mini`, the score will likely average out at about 0.8. T
 
 We'll now try changing various parts of the system and determine what makes it better or worse. But first, let's try to decouple the "RAG LLM" from the "evaluation LLM". If you want to compare different language models, you only want to change the "RAG LLM" (the one used by the chatbot), while leaving the "evaluation LLM" (the one scoring answers) unchanged. That way there's a consistent judge applying the same interpretation of `how well answer_given represents the truth`.
 
-Find where `evaluationChatClient` is defined and update it *not* to use `innerChatClient`. Instead, make it have its own independent underlying provider, e.g., for Azure OpenAI:
+Find where `evaluationChatClient` is defined and update it *not* to use `innerChatClient`. Instead, make it have its own independent underlying provider, e.g., for GitHub Models or Azure OpenAI:
 
 ```cs
 var evaluationChatClient = new ChatClientBuilder(
@@ -579,7 +579,7 @@ var evaluationChatClient = new ChatClientBuilder(
 Then, even if you change `innerChatClient`, you can leave `evaluationChatClient` unchanged.
 
 > [!TIP]
-> If at all possible, use OpenAI or Azure OpenAI for `evaluationChatClient`, regardless of what you're using in `innerChatClient` for the chatbot. The whole thing will go so much faster.
+> If at all possible, use GitHub Models, OpenAI, or Azure OpenAI for `evaluationChatClient`, regardless of what you're using in `innerChatClient` for the chatbot. The whole thing will go so much faster.
 
 ### Can we make the prompt better or worse?
 
