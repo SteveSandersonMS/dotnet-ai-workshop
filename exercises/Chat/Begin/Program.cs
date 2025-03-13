@@ -12,6 +12,7 @@ hostBuilder.Configuration.AddUserSecrets<Program>();
 hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Trace));
 
 // Register an IChatClient
+
 // For GitHub Models or Azure OpenAI:
 var innerChatClient = new AzureOpenAIClient(
         new Uri(hostBuilder.Configuration["AI:Endpoint"]!),
