@@ -290,8 +290,7 @@ This is similar to how `IChatClient` doesn't call functions automatically unless
 Add this *after* your `switch` statement:
 
 ```cs
-// This is actually an extension method provided by Microsoft.Extensions.AI.OpenAI
-// It knows how to invoke an AIFunction and continue the realtime conversation
+// This is a helper method provided inside this sample project
 await session.HandleToolCallsAsync(update, tools);
 ```
 

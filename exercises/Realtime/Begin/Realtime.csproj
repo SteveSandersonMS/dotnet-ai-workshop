@@ -12,6 +12,8 @@
     <PackageReference Include="Azure.AI.OpenAI" />
     <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+
+    <Compile Include="..\End\Support\OpenAIRealtimeExtensions.cs" LinkBase="Support" />
   </ItemGroup>
 
 </Project>
