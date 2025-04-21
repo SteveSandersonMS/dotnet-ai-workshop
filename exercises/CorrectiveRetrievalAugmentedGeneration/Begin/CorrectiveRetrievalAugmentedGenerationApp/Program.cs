@@ -14,7 +14,7 @@ builder.Configuration.AddUserSecrets<Program>();
 builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 
 IChatClient innerChatClient = new AzureOpenAIClient(new Uri(builder.Configuration["AI:Endpoint"]!), new ApiKeyCredential(builder.Configuration["AI:Key"]!))
-    .AsChatClient("gpt-4o-mini");
+    .GetChatClient("gpt-4o-mini").AsIChatClient();
 
 // Register services
 builder.Services.AddHostedService<Chatbot>();

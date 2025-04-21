@@ -9,11 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 var innerChatClient = new AzureOpenAIClient(
     new Uri(builder.Configuration["AI:Endpoint"] ?? throw new InvalidOperationException("Missing AI:Endpoint")),
     new ApiKeyCredential(builder.Configuration["AI:Key"] ?? throw new InvalidOperationException("Missing AI:Key")))
-    .AsChatClient("gpt-4o-mini");
+    .GetChatClient("gpt-4o-mini").AsIChatClient();
 
 // Or for OpenAI Platform:
-// var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
-// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
+// var aiConfig = builder.Configuration.GetRequiredSection("AI");
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsIChatClient();
 
 // Or for Ollama:
 // var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");

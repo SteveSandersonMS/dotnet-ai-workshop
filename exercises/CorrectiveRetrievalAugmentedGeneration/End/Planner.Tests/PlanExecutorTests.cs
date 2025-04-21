@@ -27,7 +27,7 @@ public class PlanExecutorTests
         IChatClient chatClient = new AzureOpenAIClient(
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
-            .AsChatClient("gpt-4o-mini");
+            .GetChatClient("gpt-4o-mini").AsIChatClient();
 
         PlanExecutor executor = new(chatClient);
         Plan plan = new()

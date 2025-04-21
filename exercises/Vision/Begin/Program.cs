@@ -14,11 +14,11 @@ hostBuilder.Configuration.AddUserSecrets<Program>();
 // For GitHub Models or Azure OpenAI:
 var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
 var innerChatClient = new AzureOpenAIClient(new Uri(aiConfig["Endpoint"]!), new ApiKeyCredential(aiConfig["Key"]!))
-    .AsChatClient("gpt-4o-mini");
+    .GetChatClient("gpt-4o-mini").AsIChatClient();
 
 // Or for OpenAI Platform:
 // var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
-// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", aiConfig["Key"]!).AsIChatClient();
 
 // Or for Ollama:
 // IChatClient innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llava");

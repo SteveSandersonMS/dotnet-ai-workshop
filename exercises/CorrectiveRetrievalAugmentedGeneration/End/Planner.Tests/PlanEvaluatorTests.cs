@@ -28,7 +28,7 @@ public class PlanEvaluatorTests
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
             
-            .AsChatClient("gpt-4o-mini");
+            .GetChatClient("gpt-4o-mini").AsIChatClient();
         PlanEvaluator planEvaluator = new (chatClient);
 
         Plan plan = new() { Steps = ["calculate necessary fuel for spaceship to cover distance between earth and the moon"] };
@@ -58,7 +58,7 @@ public class PlanEvaluatorTests
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
 
-            .AsChatClient("gpt-4o-mini");
+            .GetChatClient("gpt-4o-mini").AsIChatClient();
         PlanEvaluator planEvaluator = new(chatClient);
 
         Plan plan = new()

@@ -16,7 +16,7 @@ Start by opening the project `exercises/Chat/Begin`. Near the top, find the vari
   var innerChatClient = new AzureOpenAIClient(
       new Uri(hostBuilder.Configuration["AI:Endpoint"]!),
       new ApiKeyCredential(hostBuilder.Configuration["AI:Key"]!))
-      .AsChatClient("gpt-4o-mini");
+      .GetChatClient("gpt-4o-mini").AsIChatClient();
   ```
 
   If you're using a model/deployment other than `gpt-4o-mini`, update this code.
@@ -24,7 +24,7 @@ Start by opening the project `exercises/Chat/Begin`. Near the top, find the vari
 * For OpenAI Platform, you should assign a value like this:
 
   ```cs
-  var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", hostBuilder.Configuration["AI:Key"]!).AsChatClient();
+  var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", hostBuilder.Configuration["AI:Key"]!).AsIChatClient();
   ```
 
   If you're using a model other than `gpt-4o-mini`, update this code.

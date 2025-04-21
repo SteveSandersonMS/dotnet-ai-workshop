@@ -17,10 +17,10 @@ hostBuilder.Services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(
 var innerChatClient = new AzureOpenAIClient(
     new Uri(hostBuilder.Configuration["AI:Endpoint"]!),
     new ApiKeyCredential(hostBuilder.Configuration["AI:Key"]!))
-    .AsChatClient("gpt-4o-mini");
+    .GetChatClient("gpt-4o-mini").AsIChatClient();
 
 // Or for OpenAI Platform:
-// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", hostBuilder.Configuration["AI:Key"]!).AsChatClient();
+// var innerChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", hostBuilder.Configuration["AI:Key"]!).AsIChatClient();
 
 // Or for Ollama:
 // var innerChatClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.1");

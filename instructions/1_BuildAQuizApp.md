@@ -104,7 +104,7 @@ In `Program.cs`, see the `TODO` comment block near the top. Replace it with one 
     var innerChatClient = new AzureOpenAIClient( 
         new Uri(builder.Configuration["AI:Endpoint"]!),
         new ApiKeyCredential(builder.Configuration["AI:Key"]!))
-        .AsChatClient("gpt-4o-mini");
+        .GetChatClient("gpt-4o-mini").AsIChatClient();
     ```
 
     Clearly you'll also need to supply values for these AI endpoint and key config properties. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:
@@ -130,7 +130,7 @@ In `Program.cs`, see the `TODO` comment block near the top. Replace it with one 
    ```cs
    var innerChatClient = new OpenAI.Chat.ChatClient(
        "gpt-4o-mini",
-       builder.Configuration["AI:Key"]!).AsChatClient();
+       builder.Configuration["AI:Key"]!).AsIChatClient();
    ```
 
    Clearly you'll also need to supply a value for the `AI:Key` config property. You can do that by editing `appsettings.Development.json`, but it's better to do it using the .NET `user-secrets` tool. For that, open a command prompt in the project directory (the one containing `QuizApp.csproj`), and run:

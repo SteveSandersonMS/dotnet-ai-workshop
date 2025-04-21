@@ -15,7 +15,7 @@ Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.
   var innerChatClient = new AzureOpenAIClient(
       new Uri(aiConfig["Endpoint"]!),
       new ApiKeyCredential(aiConfig["Key"]!))
-      .AsChatClient("gpt-4o-mini");
+      .GetChatClient("gpt-4o-mini").AsIChatClient();
   ```
 
   If you're using a model other than `gpt-4o-mini`, update this code. But do note that you must use a multi-modal model for this exercise.
@@ -25,7 +25,7 @@ Start by opening the project `exercises/Vision/Begin`. Near the top of `Program.
   ```cs
   var aiConfig = hostBuilder.Configuration.GetRequiredSection("AI");
   var innerChatClient = new OpenAI.Chat.ChatClient(
-      "gpt-4o-mini", aiConfig["Key"]!).AsChatClient();
+      "gpt-4o-mini", aiConfig["Key"]!).AsIChatClient();
   ```
 
   If you're using a model other than `gpt-4o-mini`, update this code. But do note that you must use a multi-modal model for this exercise.

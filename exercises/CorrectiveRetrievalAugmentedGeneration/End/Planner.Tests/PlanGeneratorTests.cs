@@ -28,7 +28,7 @@ public class PlanGeneratorTests
                 new Uri(endpoint),
                 new ApiKeyCredential(key))
 
-            .AsChatClient("gpt-4o-mini");
+            .GetChatClient("gpt-4o-mini").AsIChatClient();
         PlanGenerator planGenerator = new(chatClient);
 
         Plan plan = await planGenerator.GeneratePlanAsync("find how much fuel a spaceship needs to reach the moon from earth");
