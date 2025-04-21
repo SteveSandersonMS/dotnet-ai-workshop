@@ -37,7 +37,6 @@ var evaluationChatClient = new ChatClientBuilder(innerChatClient)
 var embeddingGenerator = new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm");
 
 var qdrantClient = new QdrantClient("127.0.0.1");
-var isOllama = evaluationChatClient.GetService<OllamaChatClient>() is not null;
 
 // ------ LOAD TEST DATA ------
 
@@ -91,7 +90,7 @@ await Parallel.ForEachAsync(evalQuestions, parallelOptions, async (evalQuestion,
             "AnswerGroundedness": { "Justification": string, "ScoreLabel": string },
             "AnswerCorrectness": { "Justification": string, "ScoreLabel": string },
         }
-        """, useNativeJsonSchema: isOllama);
+        """);
 
     if (response.TryGetResult(out var score) && score.Populated)
     {

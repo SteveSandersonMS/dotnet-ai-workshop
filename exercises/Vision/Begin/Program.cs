@@ -29,6 +29,5 @@ hostBuilder.Services.AddChatClient(innerChatClient);
 var app = hostBuilder.Build();
 var chatClient = app.Services.GetRequiredService<IChatClient>();
 var trafficImages = Directory.GetFiles("../../../traffic-cam", "*.jpg");
-var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
 
 // TODO: Add your code here

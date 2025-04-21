@@ -30,7 +30,7 @@ public class ContextRelevancyEvaluator(IChatClient chatClient)
         Respond as JSON object of the form {
             "ContextRelevance": { "Justification": string, "ScoreLabel": string },
         }
-        """, useNativeJsonSchema: true, cancellationToken: cancellationToken);
+        """, cancellationToken: cancellationToken);
 
         if (response.TryGetResult(out var score) && score.Populated)
         {

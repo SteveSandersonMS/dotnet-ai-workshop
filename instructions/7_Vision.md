@@ -144,14 +144,6 @@ var message = new ChatMessage(ChatRole.User, $$"""
     """);
 ```
 
-... and modify the `GetResponseAsync<T>` call to:
-
-```cs
-var response = await chatClient.GetResponseAsync<TrafficCamResult>(message, useNativeJsonSchema: isOllama);
-```
-
-Setting `useNativeJsonSchema` causes Microsoft.Extensions.AI *not* to augment the prompt with JSON schema (since it assumes the model accepts JSON schema natively, and doesn't need prompt augmentation). This reduces the complexity of the prompt, making smaller models more reliable.
-
 It should be really quite reliable now. Note: You don't need to do this if you're using `gpt-4o-mini`.
 
 ## Raising alerts via function calling
@@ -181,7 +173,7 @@ var chatOptions = new ChatOptions { Tools = [raiseAlert] };
 Now update your `GetResponseAsync` call to use it:
 
 ```cs
-var response = await chatClient.GetResponseAsync<TrafficCamResult>(message, chatOptions, useNativeJsonSchema: isOllama);
+var response = await chatClient.GetResponseAsync<TrafficCamResult>(message, chatOptions);
 ```
 
 And don't forget to actually enable function invocation in your pipeline! Add `UseFunctionInvocation` to your `hostBuilder.Services.AddChatClient` call as follows:

@@ -37,7 +37,6 @@ var evaluationChatClient = new ChatClientBuilder(innerChatClient)
 var embeddingGenerator = new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm");
 
 var qdrantClient = new QdrantClient("127.0.0.1");
-var isOllama = evaluationChatClient.GetService<OllamaChatClient>() is not null;
 
 // ------ LOAD TEST DATA ------
 

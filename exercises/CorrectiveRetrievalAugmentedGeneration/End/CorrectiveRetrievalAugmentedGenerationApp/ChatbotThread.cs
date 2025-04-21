@@ -214,7 +214,7 @@ public class ChatbotThread(
             }
             """));
 
-        ChatResponse<ChatBotAnswer> response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken, useNativeJsonSchema: true);
+        ChatResponse<ChatBotAnswer> response = await chatClient.GetResponseAsync<ChatBotAnswer>(_messages, cancellationToken: cancellationToken);
 
         _messages.AddMessages(response);
 

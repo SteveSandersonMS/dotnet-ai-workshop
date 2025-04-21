@@ -32,7 +32,6 @@ hostBuilder.Services.AddChatClient(innerChatClient)
 var app = hostBuilder.Build();
 var chatClient = app.Services.GetRequiredService<IChatClient>();
 var trafficImages = Directory.GetFiles("../../../traffic-cam", "*.jpg");
-var isOllama = chatClient.GetService<OllamaChatClient>() is not null;
 
 var raiseAlert = AIFunctionFactory.Create((string cameraName, string alertReason) =>
 {
@@ -54,7 +53,7 @@ foreach (var imagePath in trafficImages)
         not just because of traffic volume.
         """);
     message.Contents.Add(new DataContent(File.ReadAllBytes(imagePath), "image/jpg"));
-    var response = await chatClient.GetResponseAsync<TrafficCamResult>([message], chatOptions, useNativeJsonSchema: isOllama);
+    var response = await chatClient.GetResponseAsync<TrafficCamResult>([message], chatOptions);
 
     if (response.TryGetResult(out var result))
     {
